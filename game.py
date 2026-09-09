@@ -4,10 +4,8 @@ import random
 
 SCREEN_WIDTH	= 800
 SCREEN_HEIGHT	= 800
-TILE_WIDTH		= 10
-TILE_HEIGHT		= 10
-SPEED_WIDTH		= SCREEN_WIDTH / TILE_WIDTH
-SPEED_HEIGHT	= SCREEN_HEIGHT / TILE_HEIGHT
+TILE_WIDTH		= 50
+TILE_HEIGHT		= 50
 
 class Snake(arcade.Window):
 	"""
@@ -19,12 +17,18 @@ class Snake(arcade.Window):
 
 		self.all_sprites = arcade.SpriteList()
 
+		# Set Framerate
+		self.set_update_rate(1 / 10)
+
+		# Set Moveement
+		self.up = self.down = self.left = self.right = False
+
 		# Create Player texture
 		self.snake_texture = arcade.make_soft_square_texture(int(SCREEN_WIDTH / TILE_WIDTH), arcade.color.LIME, 255, 255)
 
 		# Generate Player Coordinate
-		base_pos_x = random.randint(1, TILE_WIDTH)
-		base_pos_y = random.randint(1, TILE_HEIGHT)
+		base_pos_x = random.randint(1, TILE_WIDTH)	#Set to 0
+		base_pos_y = random.randint(1, TILE_HEIGHT)	#Set to 0
 
 		if (random.randint(0, 1)):
 			base_dir_x = 0
@@ -50,7 +54,7 @@ class Snake(arcade.Window):
 		delta_x, delta_y = self.direction
 		new_head = (head_x + delta_x, head_y + delta_y)
 
-		if (new_head in self.positions or not (1 < new_head[0] < TILE_WIDTH and 1 < new_head[1] < TILE_HEIGHT)):
+		if (new_head in self.positions or not (1 <= new_head[0] <= TILE_WIDTH and 1 <= new_head[1] <= TILE_HEIGHT)):
 			return False
 
 		self.positions.insert(0, new_head)
@@ -67,6 +71,15 @@ class Snake(arcade.Window):
 
 	def on_update(self, delta_time: float):
 		"""Called automatically every frame by arcade to update game state"""
+		if (self.up and self.direction != (0, -1)):
+			self.direction = (0, 1)
+		if (self.down and self.direction != (0, 1)):
+			self.direction = (0, -1)
+		if (self.left and self.direction != (1, 0)):
+			self.direction = (-1, 0)
+		if (self.right and self.direction != (-1, 0)):
+			self.direction = (1, 0)
+
 		self.move()
 
 	def on_draw(self):
@@ -90,6 +103,31 @@ class Snake(arcade.Window):
 
 		self.all_sprites.draw()
 
+	def on_key_press(self, key, modifiers):
+		"""
+		Set movement on key press
+		"""
+		if (key == arcade.key.UP):
+			self.up = True
+		elif (key == arcade.key.DOWN):
+			self.down = True
+		elif (key == arcade.key.LEFT):
+			self.left = True
+		elif (key == arcade.key.RIGHT):
+			self.right = True
+
+	def on_key_release(self, key, modifiers):
+		"""
+		Set movement on key release
+		"""
+		if (key == arcade.key.UP):
+			self.up = False
+		elif (key == arcade.key.DOWN):
+			self.down = False
+		elif (key == arcade.key.LEFT):
+			self.left = False
+		elif (key == arcade.key.RIGHT):
+			self.right = False
 		
 
 if __name__ == "__main__":
