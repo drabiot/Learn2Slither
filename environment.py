@@ -4,6 +4,17 @@ import random
 GRID_COLS = 10
 GRID_ROWS = 10
 
+COLOR_RESET = "\033[0m"
+
+COLORS = {
+    '0': "\033[90m",  # NOTHING
+    'W': "\033[97m",  # WALL
+    'R': "\033[31m",  # BAD APPLE
+    'G': "\033[32m",  # GOOD APPLE
+    'H': "\033[93m",  # HEAD
+    'S': "\033[33m",  # SNAKE
+}
+
 class Snake():
     """
     Snake game structure
@@ -14,10 +25,8 @@ class Snake():
         self.direction = (0, 0)
         self.grow = False
 
-    
     def __call__(self):
         return (self.positions)
-
 
     def _generate_start_body(self):
         """
@@ -47,6 +56,31 @@ class Snake():
                 return (positions)
 
 
+class Apple:
+    def __init__(self, excluded_positions):
+        self.position = self.random_position(excluded_positions)
+
+    def __call__(self):
+        return (self.position)
+
+    def random_position(self, excluded_positions):
+        while True:
+            position = (random.randint(1, GRID_COLS), random.randint(1, GRID_ROWS))
+            if position not in excluded_positions:
+                return (position)
+
+    def respawn(self, excluded_positions):
+        self.position = self.random_position(excluded_positions)
+
+
+class GoodApple(Apple):
+    pass
+
+
+class BadApple(Apple):
+    pass
+
+
 def create_board():
     """
     Create a snake gaming board
@@ -63,7 +97,7 @@ def create_board():
     return (board)
 
 
-def update_board(player_pos, board):
+def update_board(player_pos, good_apple_pos_1, good_apple_pos_2, bad_apple_pos, board):
     """
     Update Player/Snake & Apples positon
     """
@@ -72,6 +106,10 @@ def update_board(player_pos, board):
             board[pos_y][pos_x] = 'H'
         else:
             board[pos_y][pos_x] = 'S'
+
+    board[good_apple_pos_1[1]][good_apple_pos_1[0]] = 'G'
+    board[good_apple_pos_2[1]][good_apple_pos_2[0]] = 'G'
+    board[bad_apple_pos[1]][bad_apple_pos[0]] = 'R'
 
 
 def print_board(player_pos, board):
@@ -92,18 +130,39 @@ def print_board(player_pos, board):
 
     for row in vision_board:
         for col in row:
-            print(col, end="")
+            color_code = COLORS.get(col, "")
+            print(f"{color_code}{col}{COLOR_RESET}", end="")
         print("")
 
     return (vision_board)
+
+def debug_board(board):
+    print("")
+    for row in board:
+        for col in row:
+            color_code = COLORS.get(col, "")
+            print(f"{color_code}{col}{COLOR_RESET}", end="")
+        print("")
 
 
 def main():
     playing_board = create_board()
     player = Snake()
+    
+    occupied = set(player())
+    good_apple_1 = GoodApple(occupied)
+    occupied.add(good_apple_1())
 
-    update_board(player(), playing_board)
+    good_apple_2 = GoodApple(occupied)
+    occupied.add(good_apple_2())
+
+    bad_apple = BadApple(occupied)
+    occupied.add(bad_apple())
+
+    update_board(player(), good_apple_1(), good_apple_2(), bad_apple(), playing_board)
     print_board(player(), playing_board)
+
+    # debug_board(playing_board)
 
     return (0)
 
