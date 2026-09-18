@@ -4,6 +4,7 @@ import pygame  # noqa: E402
 
 from environment import GRID_COLS, GRID_ROWS
 
+
 CELL_SIZE = 40
 
 PYGAME_COLORS = {

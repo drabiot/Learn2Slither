@@ -1,5 +1,6 @@
 import random
 
+
 GRID_COLS = 10
 GRID_ROWS = 10
 
@@ -13,6 +14,7 @@ COLORS = {
     'H': "\033[93m",  # HEAD
     'S': "\033[33m",  # SNAKE
 }
+
 
 class Snake():
     def __init__(self):
