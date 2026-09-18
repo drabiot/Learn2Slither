@@ -1,6 +1,5 @@
 import random
 
-
 GRID_COLS = 10
 GRID_ROWS = 10
 
@@ -27,12 +26,13 @@ class Snake():
 
     def _generate_start_body(self):
         """
-        Randomly pick a head position + direction and build a 3-segment body, retrying until the whole body fits on the grid.
-        
-        Returns:
-			2D array: Three x, y value randomly and contiguously placed
+        Randomly pick a head position + direction and build a 3-segment body, 
+        retrying up to a maximum limit to avoid infinite loops.
         """
-        while (True):
+        attempts = 0
+        max_attempts = 1000
+
+        while (attempts < max_attempts):
             base_pos_x = random.randint(1, GRID_COLS)
             base_pos_y = random.randint(1, GRID_ROWS)
 
@@ -51,6 +51,10 @@ class Snake():
 
             if (len(set(positions)) == len(positions) and all(1 <= x <= GRID_COLS and 1 <= y <= GRID_ROWS for x, y in positions)):
                 return (positions)
+            
+            attempts += 1
+            
+        raise RuntimeError("Error: Can't place the snake")
 
 
 class Apple:
@@ -62,18 +66,19 @@ class Apple:
 
     def random_position(self, excluded_positions):
         """
-        Create new position for the apple in a spot where no apple or snake is
-        
-        Args:
-			excluded_positons: Snake and Apple positions
-            
-        Returns:
-			pair: x, y positions of the apple
+        Create new position for the apple in a spot where no apple or snake is,
+        with a safety exit if the board is full.
         """
-        while True:
+        attempts = 0
+        max_attempts = 10000
+
+        while (attempts < max_attempts):
             position = (random.randint(1, GRID_COLS), random.randint(1, GRID_ROWS))
-            if position not in excluded_positions:
+            if (position not in excluded_positions):
                 return (position)
+            attempts += 1
+
+        raise RuntimeError("Error: Can't place apple")
 
     def respawn(self, excluded_positions):
         self.position = self.random_position(excluded_positions)
@@ -90,9 +95,6 @@ class BadApple(Apple):
 def create_board():
     """
     Create & init the snake gaming board.
-    
-    Returns:
-		2D array: Board of the game 
     """
     rows = GRID_ROWS + 2
     cols = GRID_COLS + 2
@@ -108,14 +110,7 @@ def create_board():
 
 def update_board(player_pos, good_apple_pos_1, good_apple_pos_2, bad_apple_pos, board):
     """
-    Update Player/Snake & Apples positon on the Board.
-    
-    Args:
-		player_pos: all the x, y positions taken by the snake
-        good_apple_pos_1: x, y positions taken by first green apple
-        good_apple_pos_2: x, y positions taken by second green apple
-		bad_apple_pos: x, y positions taken by the red apple
-        board: shallow copy of the board getting update
+    Update Player/Snake & Apples position on the Board.
     """
     for index, (pos_x, pos_y) in enumerate(player_pos):
         if index == 0:
@@ -131,12 +126,6 @@ def update_board(player_pos, good_apple_pos_1, good_apple_pos_2, bad_apple_pos, 
 def print_board(player_pos, board):
     """
     Display the board in the terminal as the Snake need to see it.
-    
-    Args:
-		board: actual full board of the game
-        
-    Returns:
-		2D Array: new board where only the Snake's Head column & line are visible
     """
     head_x, head_y = player_pos[0]
 
@@ -161,9 +150,6 @@ def print_board(player_pos, board):
 def debug_board(board):
     """
     Display the board in the terminal.
-    
-    Args:
-		board: actual full board of the game
     """
     print("")
     for row in board:
