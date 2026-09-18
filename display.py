@@ -5,11 +5,10 @@ import pygame  # noqa: E402
 from environment import GRID_COLS, GRID_ROWS
 
 
-CELL_SIZE = 40
+CELL_SIZE = 50
 
 PYGAME_COLORS = {
     '0': (40, 40, 40),
-    'W': (220, 220, 220),
     'R': (200, 40, 40),
     'G': (40, 180, 40),
     'H': (250, 210, 60),
@@ -27,8 +26,8 @@ KEY_TO_DIRECTION = {
 class Display:
     def __init__(self):
         pygame.init()
-        width = (GRID_COLS + 2) * CELL_SIZE
-        height = (GRID_ROWS + 2) * CELL_SIZE
+        width = (GRID_COLS) * CELL_SIZE
+        height = (GRID_ROWS) * CELL_SIZE
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Learn2Slither")
         self.clock = pygame.time.Clock()
@@ -45,7 +44,7 @@ class Display:
         for row_idx, row in enumerate(board):
             for col_idx, cell in enumerate(row):
                 color = PYGAME_COLORS.get(cell, (0, 0, 0))
-                rect = pygame.Rect(col_idx * CELL_SIZE, row_idx * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                rect = pygame.Rect((col_idx - 1) * CELL_SIZE, (row_idx - 1) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(self.screen, color, rect)
                 pygame.draw.rect(self.screen, (10, 10, 10), rect, 1)
         pygame.display.flip()
