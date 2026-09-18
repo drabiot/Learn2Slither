@@ -27,7 +27,6 @@ DIRS = {
     "LEFT": (-1, 0),
     "RIGHT": (1, 0),
 }
-OPPOSITE = {"UP": "DOWN", "DOWN": "UP", "LEFT": "RIGHT", "RIGHT": "LEFT"}
 
 KEY_TO_DIRECTION = {
     pygame.K_UP: "UP",
@@ -35,27 +34,6 @@ KEY_TO_DIRECTION = {
     pygame.K_LEFT: "LEFT",
     pygame.K_RIGHT: "RIGHT",
 }
-
-
-def initial_direction_from_snake(positions):
-    """
-    Figure out which way the snake is already facing at spawn time,
-    from the offset between its head and the segment right behind it,
-    instead of assuming an arbitrary default.
-    
-    Args:
-		positions: position of the Snake
-	
-    Returns:
-		str: direction of the snake 
-    """
-    hx, hy = positions[0]
-    nx, ny = positions[1]
-    dx, dy = hx - nx, hy - ny
-    for name, (ddx, ddy) in DIRS.items():
-        if ((ddx, ddy) == (dx, dy)):
-            return (name)
-    return ("RIGHT")
 
 
 class Game:
@@ -74,7 +52,6 @@ class Game:
         self.bad_apple = BadApple(occupied)
         occupied.add(self.bad_apple())
 
-        self.current_direction = initial_direction_from_snake(self.snake())
         self.game_over = False
 
         self.screen = None
@@ -100,22 +77,6 @@ class Game:
         update_board(self.snake(), self.good_apple_1(), self.good_apple_2(), self.bad_apple(), self.board,)
 
 
-    def compute_action(self, requested_direction):
-        """
-        Compute the action taken by the player to move the snake.
-        If the player want to take a 360° turn, deny the move to respect sanke game movement.
-        
-        Args:
-			requested_direction: requested direction taken by the player
-        
-        Returns:
-			str: final decision if the move is coherent to the snake current direction
-        """
-        if (requested_direction == OPPOSITE[self.current_direction] and len(self.snake()) > 1):
-            return (self.current_direction)
-        return (requested_direction)
-
-
     def step(self, requested_direction):
         """
         Move the player accordingly to the direction he suggested if possible.
@@ -127,7 +88,7 @@ class Game:
         if (self.game_over):
             return
 
-        action = self.compute_action(requested_direction)
+        action = requested_direction
         self.current_direction = action
         dx, dy = DIRS[action]
 
@@ -232,9 +193,9 @@ class Game:
                 self.draw()
                 break
 
-            self.show_vision()
             if (self.terminal_output):
                 print(f"\n{self.current_direction}\n")
+            self.show_vision()
             self.draw()
 
         if (self.visual):
