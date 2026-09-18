@@ -1,4 +1,3 @@
-#!/usr/bin/env -S uv run --script
 import random
 
 GRID_COLS = 10

@@ -1,25 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
 import sys
-from os import environ
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
-import pygame
 
-from environment import (
-    GRID_COLS, GRID_ROWS,
-    create_board, update_board, print_board,
-    Snake, GoodApple, BadApple,
-)
+from environment import GRID_COLS, GRID_ROWS, create_board, update_board, print_board, Snake, GoodApple, BadApple
+from display import Display
 
-CELL_SIZE = 40
-
-PYGAME_COLORS = {
-    '0': (40, 40, 40),
-    'W': (220, 220, 220),
-    'R': (200, 40, 40),
-    'G': (40, 180, 40),
-    'H': (250, 210, 60),
-    'S': (230, 170, 30),
-}
 
 DIRS = {
     "UP": (0, -1),
@@ -28,22 +12,14 @@ DIRS = {
     "RIGHT": (1, 0),
 }
 
-KEY_TO_DIRECTION = {
-    pygame.K_UP: "UP",
-    pygame.K_DOWN: "DOWN",
-    pygame.K_LEFT: "LEFT",
-    pygame.K_RIGHT: "RIGHT",
-}
-
 
 class Game:
-    def __init__(self, visual=True, terminal_output=True):
-        self.visual = visual
+    def __init__(self, terminal_output=True):
         self.terminal_output = terminal_output
-
+ 
         self.board = create_board()
         self.snake = Snake()
-
+ 
         occupied = set(self.snake())
         self.good_apple_1 = GoodApple(occupied)
         occupied.add(self.good_apple_1())
@@ -51,18 +27,9 @@ class Game:
         occupied.add(self.good_apple_2())
         self.bad_apple = BadApple(occupied)
         occupied.add(self.bad_apple())
-
+ 
+        self.current_direction = None
         self.game_over = False
-
-        self.screen = None
-        self.clock = None
-        if (self.visual):
-            pygame.init()
-            width = (GRID_COLS + 2) * CELL_SIZE
-            height = (GRID_ROWS + 2) * CELL_SIZE
-            self.screen = pygame.display.set_mode((width, height))
-            pygame.display.set_caption("Learn2Slither")
-            self.clock = pygame.time.Clock()
 
 
     def refresh_board(self):
@@ -74,7 +41,7 @@ class Game:
                 if (self.board[row][col] != 'W'):
                     self.board[row][col] = '0'
 
-        update_board(self.snake(), self.good_apple_1(), self.good_apple_2(), self.bad_apple(), self.board,)
+        update_board(self.snake(), self.good_apple_1(), self.good_apple_2(), self.bad_apple(), self.board)
 
 
     def step(self, requested_direction):
@@ -132,23 +99,6 @@ class Game:
             self.game_over = True
 
 
-    def draw(self):
-        """
-        Draw the board with pygame.
-        """
-        if (not self.visual):
-            return
-        
-        self.screen.fill((0, 0, 0))
-        for row_idx, row in enumerate(self.board):
-            for col_idx, cell in enumerate(row):
-                color = PYGAME_COLORS.get(cell, (0, 0, 0))
-                rect = pygame.Rect(col_idx * CELL_SIZE, row_idx * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(self.screen, color, rect)
-                pygame.draw.rect(self.screen, (10, 10, 10), rect, 1)
-        pygame.display.flip()
-
-
     def show_vision(self):
         """
         Display on the terminal the board the snake Agent see. 
@@ -157,56 +107,46 @@ class Game:
             print_board(self.snake(), self.board)
 
 
-    def run_human(self):
-        """
-        Able human run the game to debug.
-        """
-        running = True
-
-        self.refresh_board()
-        self.show_vision()
-        self.draw()
-
-        while (running and not self.game_over):
-            direction_pressed = None
-
-            if (self.visual):
-                for event in pygame.event.get():
-                    if (event.type == pygame.QUIT):
-                        running = False
-                    elif (event.type == pygame.KEYDOWN):
-                        if (event.key == pygame.K_ESCAPE):
-                            running = False
-                        elif (event.key in KEY_TO_DIRECTION):
-                            direction_pressed = KEY_TO_DIRECTION[event.key]
-
-            if (direction_pressed is None):
-                if (self.visual):
-                    self.draw()
-                    self.clock.tick(30)
-                continue
-
-            self.step(direction_pressed)
-            self.refresh_board()
-
-            if (self.game_over):
-                self.draw()
-                break
-
-            if (self.terminal_output):
-                print(f"\n{self.current_direction}\n")
-            self.show_vision()
-            self.draw()
-
-        if (self.visual):
-            pygame.quit()
-
+def run_human_pygame(game):
+    """
+    """
+ 
+    display = Display()
+    game.refresh_board()
+    game.show_vision()
+    display.draw(game.board)
+ 
+    running = True
+    while running and not game.game_over:
+        kind, value = display.poll_direction()
+ 
+        if kind == "quit":
+            running = False
+            continue
+        if kind != "direction":
+            display.draw(game.board)
+            continue
+ 
+        game.step(value)
+        game.refresh_board()
+ 
+        if game.game_over:
+            display.draw(game.board)
+            break
+ 
+        if game.terminal_output:
+            print(f"\n{game.current_direction}\n")
+        game.show_vision()
+        display.draw(game.board)
+ 
+    display.close()
+    
 
 def main():
-    game = Game(visual=True, terminal_output=True)
-    game.run_human()
+    game = Game(terminal_output=True)
+    run_human_pygame(game)
     return 0
-
-
+ 
+ 
 if __name__ == "__main__":
     sys.exit(main())
