@@ -11,8 +11,8 @@ COLORS = {
     'W': "\033[97m",  # WALL
     'R': "\033[31m",  # BAD APPLE
     'G': "\033[32m",  # GOOD APPLE
-    'H': "\033[93m",  # HEAD
-    'S': "\033[33m",  # SNAKE
+    'H': "\033[94m",  # HEAD
+    'S': "\033[34m",  # SNAKE
 }
 
 
