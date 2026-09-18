@@ -143,29 +143,3 @@ def debug_board(board):
             color_code = COLORS.get(col, "")
             print(f"{color_code}{col}{COLOR_RESET}", end="")
         print("")
-
-
-def main():
-    playing_board = create_board()
-    player = Snake()
-    
-    occupied = set(player())
-    good_apple_1 = GoodApple(occupied)
-    occupied.add(good_apple_1())
-
-    good_apple_2 = GoodApple(occupied)
-    occupied.add(good_apple_2())
-
-    bad_apple = BadApple(occupied)
-    occupied.add(bad_apple())
-
-    update_board(player(), good_apple_1(), good_apple_2(), bad_apple(), playing_board)
-    print_board(player(), playing_board)
-
-    # debug_board(playing_board)
-
-    return (0)
-
-
-if __name__ == "__main__":
-    main()
