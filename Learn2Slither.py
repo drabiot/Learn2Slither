@@ -41,15 +41,21 @@ def initial_direction_from_snake(positions):
     """
     Figure out which way the snake is already facing at spawn time,
     from the offset between its head and the segment right behind it,
-    instead of assuming an arbitrary default
+    instead of assuming an arbitrary default.
+    
+    Args:
+		positions: position of the Snake
+	
+    Returns:
+		str: direction of the snake 
     """
     hx, hy = positions[0]
     nx, ny = positions[1]
     dx, dy = hx - nx, hy - ny
     for name, (ddx, ddy) in DIRS.items():
-        if (ddx, ddy) == (dx, dy):
-            return name
-    return "RIGHT"  # only reached if positions are degenerate
+        if ((ddx, ddy) == (dx, dy)):
+            return (name)
+    return ("RIGHT")
 
 
 class Game:
@@ -81,7 +87,11 @@ class Game:
             pygame.display.set_caption("Learn2Slither")
             self.clock = pygame.time.Clock()
 
+
     def refresh_board(self):
+        """
+        Clear the snake & apples from the board.
+        """
         for row in range(len(self.board)):
             for col in range(len(self.board[row])):
                 if (self.board[row][col] != 'W'):
@@ -89,12 +99,31 @@ class Game:
 
         update_board(self.snake(), self.good_apple_1(), self.good_apple_2(), self.bad_apple(), self.board,)
 
+
     def compute_action(self, requested_direction):
+        """
+        Compute the action taken by the player to move the snake.
+        If the player want to take a 360° turn, deny the move to respect sanke game movement.
+        
+        Args:
+			requested_direction: requested direction taken by the player
+        
+        Returns:
+			str: final decision if the move is coherent to the snake current direction
+        """
         if (requested_direction == OPPOSITE[self.current_direction] and len(self.snake()) > 1):
             return (self.current_direction)
         return (requested_direction)
 
+
     def step(self, requested_direction):
+        """
+        Move the player accordingly to the direction he suggested if possible.
+        Handle apple eating and loop mechanics wuth Game Over, when touching wall, snake part or if the snake die because of Red Apple.
+        
+        Args:
+			requested_direction: requested direction taken by the player
+        """
         if (self.game_over):
             return
 
@@ -141,7 +170,11 @@ class Game:
         if (len(positions) <= 0):
             self.game_over = True
 
+
     def draw(self):
+        """
+        Draw the board with pygame.
+        """
         if (not self.visual):
             return
         
@@ -154,11 +187,19 @@ class Game:
                 pygame.draw.rect(self.screen, (10, 10, 10), rect, 1)
         pygame.display.flip()
 
+
     def show_vision(self):
+        """
+        Display on the terminal the board the snake Agent see. 
+        """
         if (self.terminal_output):
             print_board(self.snake(), self.board)
 
+
     def run_human(self):
+        """
+        Able human run the game to debug.
+        """
         running = True
 
         self.refresh_board()

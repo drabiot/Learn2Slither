@@ -16,10 +16,6 @@ COLORS = {
 }
 
 class Snake():
-    """
-    Snake game structure
-    """
-    
     def __init__(self):
         self.positions = self._generate_start_body()
         self.direction = (0, 0)
@@ -30,14 +26,16 @@ class Snake():
 
     def _generate_start_body(self):
         """
-        Randomly pick a head position + direction and build a 3-segment
-        body, retrying until the whole body fits on the grid.
+        Randomly pick a head position + direction and build a 3-segment body, retrying until the whole body fits on the grid.
+        
+        Returns:
+			2D array: Three x, y value randomly and contiguously placed
         """
-        while True:
+        while (True):
             base_pos_x = random.randint(1, GRID_COLS)
             base_pos_y = random.randint(1, GRID_ROWS)
 
-            if random.randint(0, 1):
+            if (random.randint(0, 1)):
                 base_dir_x = 0
                 base_dir_y = random.choice((1, -1))
             else:
@@ -50,9 +48,7 @@ class Snake():
                 (base_pos_x - (base_dir_x * 2), base_pos_y - (base_dir_y * 2)),
             ]
 
-            if len(set(positions)) == len(positions) and all(
-                1 <= x <= GRID_COLS and 1 <= y <= GRID_ROWS for x, y in positions
-            ):
+            if (len(set(positions)) == len(positions) and all(1 <= x <= GRID_COLS and 1 <= y <= GRID_ROWS for x, y in positions)):
                 return (positions)
 
 
@@ -64,6 +60,15 @@ class Apple:
         return (self.position)
 
     def random_position(self, excluded_positions):
+        """
+        Create new position for the apple in a spot where no apple or snake is
+        
+        Args:
+			excluded_positons: Snake and Apple positions
+            
+        Returns:
+			pair: x, y positions of the apple
+        """
         while True:
             position = (random.randint(1, GRID_COLS), random.randint(1, GRID_ROWS))
             if position not in excluded_positions:
@@ -83,7 +88,10 @@ class BadApple(Apple):
 
 def create_board():
     """
-    Create a snake gaming board
+    Create & init the snake gaming board.
+    
+    Returns:
+		2D array: Board of the game 
     """
     rows = GRID_ROWS + 2
     cols = GRID_COLS + 2
@@ -99,7 +107,14 @@ def create_board():
 
 def update_board(player_pos, good_apple_pos_1, good_apple_pos_2, bad_apple_pos, board):
     """
-    Update Player/Snake & Apples positon
+    Update Player/Snake & Apples positon on the Board.
+    
+    Args:
+		player_pos: all the x, y positions taken by the snake
+        good_apple_pos_1: x, y positions taken by first green apple
+        good_apple_pos_2: x, y positions taken by second green apple
+		bad_apple_pos: x, y positions taken by the red apple
+        board: shallow copy of the board getting update
     """
     for index, (pos_x, pos_y) in enumerate(player_pos):
         if index == 0:
@@ -114,7 +129,13 @@ def update_board(player_pos, good_apple_pos_1, good_apple_pos_2, bad_apple_pos, 
 
 def print_board(player_pos, board):
     """
-    Display the board as the Snake need to see it
+    Display the board in the terminal as the Snake need to see it.
+    
+    Args:
+		board: actual full board of the game
+        
+    Returns:
+		2D Array: new board where only the Snake's Head column & line are visible
     """
     head_x, head_y = player_pos[0]
 
@@ -137,6 +158,12 @@ def print_board(player_pos, board):
     return (vision_board)
 
 def debug_board(board):
+    """
+    Display the board in the terminal.
+    
+    Args:
+		board: actual full board of the game
+    """
     print("")
     for row in board:
         for col in row:
