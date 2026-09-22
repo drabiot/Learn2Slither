@@ -220,7 +220,7 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False, display=N
             game.board
         )
 
-    while (not game.game_ove and steps < max_steps):
+    while (not game.game_over and steps < max_steps):
         state = vision_to_state(
             compute_vision(
                 game.board,
