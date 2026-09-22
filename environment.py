@@ -26,9 +26,10 @@ class Snake():
 
     def _generate_start_body(self):
         """
-        Randomly pick a head position + direction and build a 3-segment body, 
+        Randomly pick a head position + direction and build a 3-segment body,
         retrying up to a maximum limit to avoid infinite loops.
         """
+
         attempts = 0
         max_attempts = 1000
 
@@ -49,11 +50,13 @@ class Snake():
                 (base_pos_x - (base_dir_x * 2), base_pos_y - (base_dir_y * 2)),
             ]
 
-            if (len(set(positions)) == len(positions) and all(1 <= x <= GRID_COLS and 1 <= y <= GRID_ROWS for x, y in positions)):
+            if (len(set(positions)) == len(positions) and
+                all(1 <= x <= GRID_COLS and
+                    1 <= y <= GRID_ROWS for x, y in positions)):
                 return (positions)
-            
+
             attempts += 1
-            
+
         raise RuntimeError("Error: Can't place the snake")
 
 
@@ -69,11 +72,13 @@ class Apple:
         Create new position for the apple in a spot where no apple or snake is,
         with a safety exit if the board is full.
         """
+
         attempts = 0
         max_attempts = 10000
 
         while (attempts < max_attempts):
-            position = (random.randint(1, GRID_COLS), random.randint(1, GRID_ROWS))
+            position = (random.randint(1, GRID_COLS),
+                        random.randint(1, GRID_ROWS))
             if (position not in excluded_positions):
                 return (position)
             attempts += 1
@@ -96,22 +101,26 @@ def create_board():
     """
     Create & init the snake gaming board.
     """
+
     rows = GRID_ROWS + 2
     cols = GRID_COLS + 2
     board = [['0' for _ in range(cols)] for _ in range(rows)]
 
     for row in range(len(board)):
         for col in range(len(board[row])):
-            if (col == 0 or col == GRID_COLS + 1 or row == 0 or row == GRID_ROWS + 1):
+            if (col == 0 or col == GRID_COLS + 1 or
+               row == 0 or row == GRID_ROWS + 1):
                 board[row][col] = 'W'
 
     return (board)
 
 
-def update_board(player_pos, good_apple_pos_1, good_apple_pos_2, bad_apple_pos, board):
+def update_board(player_pos, good_apple_pos_1,
+                 good_apple_pos_2, bad_apple_pos, board):
     """
     Update Player/Snake & Apples position on the Board.
     """
+
     for index, (pos_x, pos_y) in enumerate(player_pos):
         if index == 0:
             board[pos_y][pos_x] = 'H'
@@ -127,6 +136,7 @@ def print_board(player_pos, board):
     """
     Display the board in the terminal as the Snake need to see it.
     """
+
     head_x, head_y = player_pos[0]
 
     rows = len(board)
@@ -147,10 +157,12 @@ def print_board(player_pos, board):
 
     return (vision_board)
 
+
 def debug_board(board):
     """
     Display the board in the terminal.
     """
+
     print("")
     for row in board:
         for col in row:

@@ -1,10 +1,8 @@
 import os
 import math
+from environment import GRID_COLS, GRID_ROWS
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 import pygame  # noqa: E402
-
-from environment import GRID_COLS, GRID_ROWS
-
 
 CELL_SIZE = 40
 
@@ -40,29 +38,32 @@ class Display:
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Learn2Slither")
         self.clock = pygame.time.Clock()
-        
+
         self.current_direction = "UP"
         self.last_head_pos = None
         self.has_moved = False
 
         try:
             self.raw_textures = {
-                'R': pygame.image.load("texture/red_apple.png").convert_alpha(),
-                'G': pygame.image.load("texture/green_apple.png").convert_alpha(),
-                'H': pygame.image.load("texture/snake_head.png").convert_alpha(),
+                'R': pygame.image.load(
+                    "texture/red_apple.png").convert_alpha(),
+                'G': pygame.image.load(
+                    "texture/green_apple.png").convert_alpha(),
+                'H': pygame.image.load(
+                    "texture/snake_head.png").convert_alpha(),
             }
         except pygame.error as e:
             print(f"Error when loading textures : {e}")
             self.raw_textures = {}
 
-
     def draw(self, board):
         """
         Render the current board with pygame.
-        
+
         Args:
             board: actual full board of the game
         """
+
         head_pos = None
         for r_idx, row in enumerate(board):
             for c_idx, cell in enumerate(row):
@@ -76,7 +77,7 @@ class Display:
             if self.last_head_pos and self.last_head_pos != head_pos:
                 dr = head_pos[0] - self.last_head_pos[0]
                 dc = head_pos[1] - self.last_head_pos[1]
-                
+
                 if (abs(dr) + abs(dc) == 1):
                     if (dr == -1):
                         self.current_direction = "UP"
@@ -117,7 +118,8 @@ class Display:
                 if (cell in self.raw_textures):
                     img = self.raw_textures[cell]
                     current_size = int(CELL_SIZE * pulse_factor)
-                    scaled_img = pygame.transform.scale(img, (current_size, current_size))
+                    scaled_img = pygame.transform.scale(
+                        img, (current_size, current_size))
                     img_rect = scaled_img.get_rect()
                     img_rect.center = rect.center
                     self.screen.blit(scaled_img, img_rect)
@@ -138,16 +140,16 @@ class Display:
                 img = self.raw_textures['H']
                 angle = DIRECTION_ANGLES.get(self.current_direction, 0)
                 img = pygame.transform.rotate(img, angle)
-                
+
                 current_size = int(CELL_SIZE * 2)
-                scaled_img = pygame.transform.scale(img, (current_size, current_size))
+                scaled_img = pygame.transform.scale(
+                    img, (current_size, current_size))
                 img_rect = scaled_img.get_rect()
                 img_rect.center = rect.center
-                
+
                 self.screen.blit(scaled_img, img_rect)
 
         pygame.display.flip()
-
 
     def poll_direction(self, idle_fps=30):
         for event in pygame.event.get():
@@ -163,7 +165,6 @@ class Display:
 
         self.clock.tick(idle_fps)
         return (None, None)
-
 
     def close(self):
         pygame.quit()
