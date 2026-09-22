@@ -49,16 +49,18 @@ class Game:
 
     def step(self, requested_direction):
         """
-        Move the player accordingly to the direction he suggested if possible.
-        Handle apple eating and loop mechanics wuth Game Over,
-        when touching wall,
-        snake part or if the snake die because of Red Apple.
-
-        Args:
-            requested_direction: requested direction taken by the player
+        Move the player according to the requested direction.
+        Returns an event describing what happened:
+            None       -> normal movement
+            "green"    -> ate a green apple
+            "red"      -> ate a red apple
+            "wall"     -> hit a wall
+            "self"     -> hit itself
+            "starved"  -> snake died after eating a red apple
         """
-        if (self.game_over):
-            return
+
+        if self.game_over:
+            return None
 
         action = requested_direction
         self.current_direction = action
@@ -69,42 +71,74 @@ class Game:
         new_head = (head_x + dx, head_y + dy)
 
         target_cell = self.board[new_head[1]][new_head[0]]
-        if (target_cell == 'W'):
-            self.game_over = True
-            return
 
-        will_grow = new_head in (self.good_apple_1(), self.good_apple_2())
+        if target_cell == 'W':
+            self.game_over = True
+            return "wall"
+
+        will_grow = new_head in (
+            self.good_apple_1(),
+            self.good_apple_2()
+        )
+
         tail = positions[-1]
         body_ahead = positions if will_grow else positions[:-1]
-        if (new_head in body_ahead and new_head != tail):
+
+        if new_head in body_ahead and new_head != tail:
             self.game_over = True
-            return
+            return "self"
 
         positions.insert(0, new_head)
 
-        if (new_head == self.good_apple_1()):
-            occupied = set(positions) | (
-                {self.good_apple_2(), self.bad_apple()})
+        if new_head == self.good_apple_1():
+            occupied = set(positions) | {
+                self.good_apple_2(),
+                self.bad_apple()
+            }
+
             self.good_apple_1.respawn(occupied)
-        elif (new_head == self.good_apple_2()):
-            occupied = set(positions) | (
-                {self.good_apple_1(), self.bad_apple()})
+
+            self.snake.positions = positions
+            return "green"
+
+        elif new_head == self.good_apple_2():
+            occupied = set(positions) | {
+                self.good_apple_1(),
+                self.bad_apple()
+            }
+
             self.good_apple_2.respawn(occupied)
-        elif (new_head == self.bad_apple()):
-            occupied = set(positions) | (
-                {self.good_apple_1(), self.good_apple_2()})
+
+            self.snake.positions = positions
+            return "green"
+
+        elif new_head == self.bad_apple():
+            occupied = set(positions) | {
+                self.good_apple_1(),
+                self.good_apple_2()
+            }
+
             self.bad_apple.respawn(occupied)
+
             positions.pop()
 
-            if (positions):
+            if positions:
                 positions.pop()
+
+            self.snake.positions = positions
+
+            if len(positions) <= 0:
+                self.game_over = True
+                return "starved"
+
+            return "red"
+
         else:
             positions.pop()
 
         self.snake.positions = positions
 
-        if (len(positions) <= 0):
-            self.game_over = True
+        return None
 
     def show_vision(self):
         """

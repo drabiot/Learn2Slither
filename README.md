@@ -37,3 +37,4 @@ Generate the environment
 ```
 
 ## Sources
+- Create a q-table & use it https://youtu.be/MSrfaI1gGjI

@@ -166,5 +166,16 @@ class Display:
         self.clock.tick(idle_fps)
         return (None, None)
 
+    def pump_quit(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return True
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return True
+        return False
+ 
+    def tick(self, fps):
+        self.clock.tick(fps)
+
     def close(self):
         pygame.quit()
