@@ -13,7 +13,7 @@ DIRECTIONS = {"UP":0, "DOWN":1, "LEFT":2, "RIGHT":3}
 
 class Agent:
     def __init__(self, alpha=0.1, gamma=0.9, epsilon=1.0,
-                 epsilon_min=0.0001, epsilon_decay=0.999):
+                 epsilon_min=0.001, epsilon_decay=0.999):
         self.q_table = {}
         self.alpha = alpha
         self.gamma = gamma
@@ -61,9 +61,9 @@ class Agent:
         if (learn and random.random() < self.epsilon):
             return (random.choice(safe_actions))
 
-        values = self.q_table[state]
-        best = max(values.values())
-        best_actions = [a for a, v in values.items() if v == best]
+        safe_values = {a: self.q_table[state][a] for a in safe_actions}
+        best = max(safe_values.values())
+        best_actions = [a for a, v in safe_values.items() if v == best]
 
         return (random.choice(best_actions))
 
@@ -245,6 +245,7 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
             f"max length = {stats['max_length']}, "
             f"duration = {stats['duration']}, "
             f"best so far = {best_length}, "
+            f"epsilon = {agent.epsilon}"
         )
 
     if (visual):
