@@ -3,31 +3,41 @@ GREEN = "G"
 RED = "R"
 SELF = "S"
 
-
 REWARDS = {
     "green": 30.0,
-    "red": -80.0,
-    "wall": -30.0,
-    "self": -30.0,
-    "starved": -15.0,
-    None: -0.05,
+    "red": -10.0,
+    "wall": -100.0,
+    "self": -100.0,
+    "starved": -100.0,
+    None: -0.5,
 }
 
 
 def compute_vision(board, head):
+    """
+    Scan the 4 lines of sight from the head
+    
+    Args:
+		board: full game board
+        head: head position
+        
+    Returns:
+		up: column from upper wall to head
+        down: column from head to lower wall
+        left: line from left wall to head
+        right: line from head to right wall
+    """
     hx, hy = head
 
     def scan(dx, dy):
         line = []
+        x, y = hx + dx, hy + dy
 
-        x = hx + dx
-        y = hy + dy
-
-        while True:
+        while (True):
             symbol = board[y][x]
             line.append(symbol)
 
-            if (symbol == WALL):
+            if (symbol == WALL or symbol == SELF):
                 break
 
             x += dx
@@ -35,54 +45,50 @@ def compute_vision(board, head):
 
         return (line)
 
-    return ({
+    return {
         "up": scan(0, -1),
         "down": scan(0, 1),
         "left": scan(-1, 0),
         "right": scan(1, 0),
-    })
-
-
-def distance_category(distance):
-    if (distance is None):
-        return ("NONE")
-
-    if (distance <= 1):
-        return ("NEAR")
-
-    if (distance <= 4):
-        return ("CLOSE")
-
-    if (distance <= 8):
-        return ("MEDIUM")
-
-    return ("FAR")
+    }
 
 
 def summarize(line):
-    wall_distance = None
-    green_distance = None
-    self_distance = None
-
-    for distance, symbol in enumerate(line, start=1):
-
-        if (symbol == WALL):
-            wall_distance = distance
-
-        elif (symbol == GREEN and green_distance is None):
-            green_distance = distance
-
-        elif (symbol == SELF and self_distance is None):
-            self_distance = distance
-
-    return (
-        distance_category(wall_distance),
-        distance_category(green_distance),
-        distance_category(self_distance),
-    )
+    """
+    Return the immediate neighbour (danger check) and
+    whether a green or red apple is visible anywhere along the line
+    
+    Args:
+		line: neighbour case
+    
+    Returns:
+		nearest: state of the neighbour
+        has_green (bool): check Green Apple
+        has_red (bool): check Red Apple
+        has_self (bool): check Snake part
+    """
+    nearest = line[0]
+    has_green = GREEN in line
+    has_red = RED in line
+    has_self = SELF in line
+    return (nearest, has_green, has_red, has_self)
 
 
 def vision_to_state(vision, previous_action=None):
+    """
+    Check for each direction the state of the board by the agent vision
+    
+    Args:
+    	vision: vision board of the agent
+    	previous_action: previous action
+        
+    Returns:
+		vision_up: upper case actual state
+        vision_down: down case actual state
+        vision_left: left case actual state
+        vision_right: right case actual state
+        previous_action: previous action
+    """
     return (
         summarize(vision["up"]),
         summarize(vision["down"]),
@@ -93,85 +99,8 @@ def vision_to_state(vision, previous_action=None):
 
 
 def get_state(board, head, previous_action=None):
-    return (vision_to_state(
-        compute_vision(board, head),
-        previous_action,
-    ))
+    return (vision_to_state(compute_vision(board, head), previous_action))
 
 
 def reward_for(event):
-    return (REWARDS.get(event, -0.05))
-
-
-def food_distance(state):
-    return (None)
-
-
-def proximity_reward(old_state, new_state):
-    values = {
-        "NONE": 0,
-        "FAR": 1,
-        "MEDIUM": 2,
-        "CLOSE": 3,
-        "NEAR": 4,
-    }
-
-    old_best = 0
-    new_best = 0
-
-    for direction in old_state[:4]:
-        food = direction[1]
-        old_best = max(
-            old_best,
-            values[food],
-        )
-
-    for direction in new_state[:4]:
-        food = direction[1]
-        new_best = max(
-            new_best,
-            values[food],
-        )
-
-    difference = new_best - old_best
-
-    if (difference > 0):
-        return (1.5)
-
-    if (difference < 0):
-        return (-1.0)
-
-    return (0.0)
-
-
-def danger_penalty(state, action):
-    direction_index = {
-        "UP": 0,
-        "DOWN": 1,
-        "LEFT": 2,
-        "RIGHT": 3,
-    }
-
-    wall_distance = state[
-        direction_index[action]
-    ][0]
-
-    self_distance = state[
-        direction_index[action]
-    ][2]
-
-    penalty = 0.0
-
-    if (wall_distance) == "NEAR":
-        penalty -= 4.0
-
-    elif (wall_distance) == "CLOSE":
-        penalty -= 0.5
-
-    if (self_distance) == "NEAR":
-        penalty -= 4.0
-
-    elif (self_distance) == "CLOSE":
-        penalty -= 1.0
-
-    return (penalty)
+    return (REWARDS.get(event, -0.5))

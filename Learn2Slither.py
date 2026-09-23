@@ -16,6 +16,13 @@ DIRS = {
     "RIGHT": (1, 0),
 }
 
+OPPOSITES = {
+    "UP": "DOWN",
+    "DOWN": "UP",
+    "LEFT": "RIGHT",
+    "RIGHT": "LEFT",
+}
+
 
 class Game:
     def __init__(self, terminal_output=True):
@@ -50,6 +57,8 @@ class Game:
     def step(self, requested_direction):
         """
         Move the player according to the requested direction.
+        Deny 360 degre turn of the player
+        
         Returns an event describing what happened:
             None       -> normal movement
             "green"    -> ate a green apple
@@ -59,10 +68,14 @@ class Game:
             "starved"  -> snake died after eating a red apple
         """
 
-        if self.game_over:
-            return None
+        if (self.game_over):
+            return (None)
 
-        action = requested_direction
+        if (self.current_direction and requested_direction == OPPOSITES.get(self.current_direction)):
+            action = self.current_direction
+        else:
+            action = requested_direction
+
         self.current_direction = action
         dx, dy = DIRS[action]
 
@@ -72,9 +85,9 @@ class Game:
 
         target_cell = self.board[new_head[1]][new_head[0]]
 
-        if target_cell == 'W':
+        if (target_cell == 'W'):
             self.game_over = True
-            return "wall"
+            return ("wall")
 
         will_grow = new_head in (
             self.good_apple_1(),
@@ -84,13 +97,13 @@ class Game:
         tail = positions[-1]
         body_ahead = positions if will_grow else positions[:-1]
 
-        if new_head in body_ahead and new_head != tail:
+        if (new_head in body_ahead and new_head != tail):
             self.game_over = True
-            return "self"
+            return ("self")
 
         positions.insert(0, new_head)
 
-        if new_head == self.good_apple_1():
+        if (new_head == self.good_apple_1()):
             occupied = set(positions) | {
                 self.good_apple_2(),
                 self.bad_apple()
@@ -99,9 +112,9 @@ class Game:
             self.good_apple_1.respawn(occupied)
 
             self.snake.positions = positions
-            return "green"
+            return ("green")
 
-        elif new_head == self.good_apple_2():
+        elif (new_head == self.good_apple_2()):
             occupied = set(positions) | {
                 self.good_apple_1(),
                 self.bad_apple()
@@ -110,9 +123,9 @@ class Game:
             self.good_apple_2.respawn(occupied)
 
             self.snake.positions = positions
-            return "green"
+            return ("green")
 
-        elif new_head == self.bad_apple():
+        elif (new_head == self.bad_apple()):
             occupied = set(positions) | {
                 self.good_apple_1(),
                 self.good_apple_2()
@@ -122,23 +135,23 @@ class Game:
 
             positions.pop()
 
-            if positions:
+            if (positions):
                 positions.pop()
 
             self.snake.positions = positions
 
-            if len(positions) <= 0:
+            if (len(positions) <= 0):
                 self.game_over = True
-                return "starved"
+                return ("starved")
 
-            return "red"
+            return ("red")
 
         else:
             positions.pop()
 
         self.snake.positions = positions
 
-        return None
+        return (None)
 
     def show_vision(self):
         """
@@ -151,6 +164,7 @@ class Game:
 
 def run_human_pygame(game):
     """
+    Able testing Snake Game by human
     """
 
     display = Display()
