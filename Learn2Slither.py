@@ -1,207 +1,148 @@
 #!/usr/bin/env -S uv run --script
 import sys
+import os
+os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
+import pygame
 
-from environment import (
-    GRID_COLS, GRID_ROWS,
-    create_board, update_board, print_board,
-    Snake, GoodApple, BadApple
-)
-from display import Display
+from agent import Agent, train
 
 
-DIRS = {
-    "UP": (0, -1),
-    "DOWN": (0, 1),
-    "LEFT": (-1, 0),
-    "RIGHT": (1, 0),
-}
+class Menu:
+    def __init__(self):
+        pygame.init()
+        self.width = self.height = 800
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Learn2Slither : Menu")
+        self.font = pygame.font.Font(None, 36)
+        self.title_font = pygame.font.Font(None, 54)
 
-OPPOSITES = {
-    "UP": "DOWN",
-    "DOWN": "UP",
-    "LEFT": "RIGHT",
-    "RIGHT": "LEFT",
-}
+        self.options = [
+            {"name": "save path", "type": "str", "val": "models/my_model.txt", "edit": False},
+            {"name": "load path", "type": "str", "val": "", "edit": False},
+            {"name": "sessions", "type": "int", "val": 20, "edit": False},
+            {"name": "max steps", "type": "int", "val": 2000, "edit": False},
+            {"name": "learning", "type": "bool", "val": True, "edit": False},
+            {"name": "terminal", "type": "bool", "val": False, "edit": False},
+            {"name": "display", "type": "bool", "val": True, "edit": False},
+            {"name": "fps", "type": "int", "val": 8, "edit": False},
+            {"name": "LAUNCH", "type": "action", "val": None, "edit": False}
+        ]
+        self.selected_index = 0
 
+    def run(self):
+        clock = pygame.time.Clock()
+        running = True
 
-class Game:
-    def __init__(self, terminal_output=True):
-        self.terminal_output = terminal_output
+        while (running):
+            self.screen.fill((30, 30, 30))
 
-        self.board = create_board()
-        self.snake = Snake()
+            title_surf = self.title_font.render("Learn2Slither", True, (255, 255, 255))
+            self.screen.blit(title_surf, (self.width // 2 - title_surf.get_width() // 2, 50))
 
-        occupied = set(self.snake())
-        self.good_apple_1 = GoodApple(occupied)
-        occupied.add(self.good_apple_1())
-        self.good_apple_2 = GoodApple(occupied)
-        occupied.add(self.good_apple_2())
-        self.bad_apple = BadApple(occupied)
-        occupied.add(self.bad_apple())
+            left_col_x = 100
+            right_col_x = 450
+            start_y = 180
+            y_spacing = 45
 
-        self.current_direction = None
-        self.game_over = False
+            for i, opt in enumerate(self.options):
+                col = 0 if i < 4 or i == 8 else 1
+                row = i if col == 0 else i -4
 
-    def refresh_board(self):
-        """
-        Clear the snake & apples from the board.
-        """
-        for row in range(len(self.board)):
-            for col in range(len(self.board[row])):
-                if (self.board[row][col] != 'W'):
-                    self.board[row][col] = '0'
+                if (i == 8):
+                    x = self.width // 2 -100
+                    y = 480
+                else:
+                    x = left_col_x if col == 0 else right_col_x
+                    y = start_y + (row * y_spacing)
 
-        update_board(self.snake(), self.good_apple_1(),
-                     self.good_apple_2(), self.bad_apple(), self.board)
+                color = (0, 255, 0) if i == self.selected_index else (200, 200, 200)
+                if (opt["edit"]):
+                    color = (255, 255, 0)
 
-    def step(self, requested_direction):
-        """
-        Move the player according to the requested direction.
-        Deny 360 degre turn of the player
+                if (opt["type"] == "bool"):
+                    val_str = "On" if opt["val"] else "Off"
+                    text = f"{opt['name']}: {val_str}"
+                elif (opt["type"] == "action"):
+                    text = f"-- {opt['name']} --"
+                else:
+                    val_str = str(opt["val"]) if opt["val"] != "" else "<none>"
+                    text = f"{opt['name']}: {val_str}"
+
+                surf = self.font.render(text, True, color)
+                self.screen.blit(surf, (x, y))
+
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if (event.type == pygame.QUIT):
+                    pygame.quit()
+                    sys.exit()
+                elif (event.type == pygame.KEYDOWN):
+                    active_opt = self.options[self.selected_index]
+
+                    if (active_opt["edit"]):
+                        if (event.key == pygame.K_RETURN):
+                            active_opt["edit"] = False
+                        elif (event.key == pygame.K_BACKSPACE):
+                            active_opt["val"] = active_opt["val"][:-1]
+                        else:
+                            active_opt["val"] += event.unicode
+                    else:
+                        if (event.key == pygame.K_UP):
+                            self.selected_index = (self.selected_index - 1) % len(self.options)
+                        elif (event.key == pygame.K_DOWN):
+                            self.selected_index = (self.selected_index + 1) % len(self.options)
+                        elif (event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT):
+                            if (active_opt["type"] == "bool"):
+                                active_opt["val"] = not active_opt["val"]
+                            elif (active_opt["type"] == "int"):
+                                delta = 1 if event.key == pygame.K_RIGHT else -1
+                                if ("sessions" in active_opt["name"]):
+                                    active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                                else:
+                                    active_opt["val"] = max(1, active_opt["val"] + delta)
+                        elif (event.key == pygame.K_RETURN):
+                            if (active_opt["type"] == "bool"):
+                                active_opt["val"] = not active_opt["val"]
+                            elif (active_opt["type"] == "str"):
+                                active_opt["edit"] = True
+                            elif (active_opt["name"] == "LAUNCH" or self.selected_index == len(self.options) - 1):
+                                self.execute_launch()
+
+            clock.tick(30)
+
+    def execute_launch(self):
+        config = {opt["name"]: opt["val"] for opt in self.options if opt["type"] != "action"}
+
+        pygame.quit()
+
+        load_path = config["load path"] if config["load path"] != "" else None
+        save_path = config["save path"] if config["save path"] != "" else None
         
-        Returns an event describing what happened:
-            None       -> normal movement
-            "green"    -> ate a green apple
-            "red"      -> ate a red apple
-            "wall"     -> hit a wall
-            "self"     -> hit itself
-            "starved"  -> snake died after eating a red apple
-        """
-
-        if (self.game_over):
-            return (None)
-
-        if (self.current_direction and requested_direction == OPPOSITES.get(self.current_direction)):
-            action = self.current_direction
+        if (load_path):
+            agent = Agent.load(load_path)
+            print(f"Load trained model from {load_path}")
         else:
-            action = requested_direction
+            agent = Agent()
 
-        self.current_direction = action
-        dx, dy = DIRS[action]
-
-        positions = self.snake()
-        head_x, head_y = positions[0]
-        new_head = (head_x + dx, head_y + dy)
-
-        target_cell = self.board[new_head[1]][new_head[0]]
-
-        if (target_cell == 'W'):
-            self.game_over = True
-            return ("wall")
-
-        will_grow = new_head in (
-            self.good_apple_1(),
-            self.good_apple_2()
+        train(
+            sessions=int(config["sessions"]),
+            agent=agent,
+            save_path=save_path,
+            learn=config["learning"],
+            visual=config["display"],
+            terminal_output=config["terminal"],
+            fps=int(config["fps"]),
+            max_steps=int(config["max steps"]),
         )
 
-        tail = positions[-1]
-        body_ahead = positions if will_grow else positions[:-1]
-
-        if (new_head in body_ahead and new_head != tail):
-            self.game_over = True
-            return ("self")
-
-        positions.insert(0, new_head)
-
-        if (new_head == self.good_apple_1()):
-            occupied = set(positions) | {
-                self.good_apple_2(),
-                self.bad_apple()
-            }
-
-            self.good_apple_1.respawn(occupied)
-
-            self.snake.positions = positions
-            return ("green")
-
-        elif (new_head == self.good_apple_2()):
-            occupied = set(positions) | {
-                self.good_apple_1(),
-                self.bad_apple()
-            }
-
-            self.good_apple_2.respawn(occupied)
-
-            self.snake.positions = positions
-            return ("green")
-
-        elif (new_head == self.bad_apple()):
-            occupied = set(positions) | {
-                self.good_apple_1(),
-                self.good_apple_2()
-            }
-
-            self.bad_apple.respawn(occupied)
-
-            positions.pop()
-
-            if (positions):
-                positions.pop()
-
-            self.snake.positions = positions
-
-            if (len(positions) <= 0):
-                self.game_over = True
-                return ("starved")
-
-            return ("red")
-
-        else:
-            positions.pop()
-
-        self.snake.positions = positions
-
-        return (None)
-
-    def show_vision(self):
-        """
-        Display on the terminal the board the snake Agent see.
-        """
-
-        if (self.terminal_output):
-            print_board(self.snake(), self.board)
-
-
-def run_human_pygame(game):
-    """
-    Able testing Snake Game by human
-    """
-
-    display = Display()
-    game.refresh_board()
-    game.show_vision()
-    display.draw(game.board)
-
-    running = True
-    while running and not game.game_over:
-        kind, value = display.poll_direction()
-
-        if kind == "quit":
-            running = False
-            continue
-        if kind != "direction":
-            display.draw(game.board)
-            continue
-
-        game.step(value)
-        game.refresh_board()
-
-        if game.game_over:
-            display.draw(game.board)
-            break
-
-        if game.terminal_output:
-            print(f"\n{game.current_direction}\n")
-        game.show_vision()
-        display.draw(game.board)
-
-    display.close()
+        sys.exit(main())
 
 
 def main():
-    game = Game(terminal_output=True)
-    run_human_pygame(game)
-    return 0
+    menu = Menu()
+    menu.run()
+    return (0)
 
 
 if __name__ == "__main__":

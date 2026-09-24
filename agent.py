@@ -5,8 +5,7 @@ import random
 import sys
 from collections import deque
 
-from Learn2Slither import Game
-from interpreter import compute_vision, vision_to_state, reward_for
+from interpreter import compute_vision, vision_to_state, reward_for, Game
 
 ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
 DIRECTIONS = {"UP":0, "DOWN":1, "LEFT":2, "RIGHT":3}
