@@ -57,7 +57,7 @@ class Agent:
 
         safe_actions = [
             action for action in ACTIONS
-            if state[DIRECTIONS[action]][0] not in ("W", "S")
+            if state[DIRECTIONS[action]][0] not in ()
         ]
 
         if (not safe_actions):
