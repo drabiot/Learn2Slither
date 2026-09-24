@@ -272,7 +272,6 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
             f"max length = {stats['max_length']}, "
             f"duration = {stats['duration']}, "
             f"best so far = {best_length}, "
-            f"epsilon = {agent.epsilon}, "
             f"lenght average = {length_mean / session}"
         )
 
