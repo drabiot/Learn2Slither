@@ -11,9 +11,9 @@ from interpreter import compute_vision, vision_to_state, reward_for
 ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
 DIRECTIONS = {"UP":0, "DOWN":1, "LEFT":2, "RIGHT":3}
 
-LOOP_WINDOW = 20
-LOOP_MIN_UNIQUE = 6
-LOOP_PENALTY = -1.0
+LOOP_WINDOW = 30
+LOOP_MIN_UNIQUE = 5
+LOOP_PENALTY = -5.0
 
 
 class Agent:
