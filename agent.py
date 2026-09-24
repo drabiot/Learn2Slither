@@ -85,11 +85,23 @@ class Agent:
         target = reward + self.gamma * future
         self.q_table[state][action] += self.alpha * (target - current)
 
-    def decay_epsilon(self):
+    def decay_epsilon(self, session=None, total_sessions=None):
         """
-        Decay the percentage of randomness allowed for the agent
+        Decay the percentage of randomness allowed for the agent 
+        based on the training progress (sessions).
         """
-        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+        if not hasattr(self, "episode_count"):
+            self.episode_count = 0
+        self.episode_count += 1
+
+        s = session if session is not None else self.episode_count
+        t = total_sessions if total_sessions is not None else getattr(self, "total_sessions", 1000)
+
+        progress = min(1.0, s / t)
+        self.epsilon = max(
+            self.epsilon_min,
+            1.0 - (1.0 - self.epsilon_min) * progress
+        )
 
     def save(self, path):
         """
@@ -134,7 +146,7 @@ class Agent:
 
 
 def play_episode(agent, learn=True, visual=False, terminal_output=False,
-                 display=None, fps=8, max_steps=2000):
+                 display=None, fps=8, max_steps=2000, session=1, session_max=100):
     """
     Train sessions by session our agent
 
@@ -202,7 +214,7 @@ def play_episode(agent, learn=True, visual=False, terminal_output=False,
         previous_action = action
 
     if (learn):
-        agent.decay_epsilon()
+        agent.decay_epsilon(session, session_max)
 
     return ({"max_length": max_length, "duration": steps})
 
@@ -231,21 +243,24 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
         display = Display()
 
     best_length = 0
+    length_mean = 0
 
     for session in range(1, sessions + 1):
         stats = play_episode(
             agent, learn=learn, visual=visual,
             terminal_output=terminal_output, display=display, fps=fps,
-            max_steps=max_steps,
+            max_steps=max_steps, session=session, session_max=sessions
         )
         best_length = max(best_length, stats["max_length"])
+        length_mean = length_mean + stats["max_length"]
 
         print(
             f"Session {session}/{sessions} - "
             f"max length = {stats['max_length']}, "
             f"duration = {stats['duration']}, "
             f"best so far = {best_length}, "
-            f"epsilon = {agent.epsilon}"
+            f"epsilon = {agent.epsilon}, "
+            f"lenght average = {length_mean / session}"
         )
 
     if (visual):
