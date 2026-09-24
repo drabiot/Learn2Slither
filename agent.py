@@ -3,12 +3,17 @@ import argparse
 import pickle
 import random
 import sys
+from collections import deque
 
 from Learn2Slither import Game
 from interpreter import compute_vision, vision_to_state, reward_for
 
 ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
 DIRECTIONS = {"UP":0, "DOWN":1, "LEFT":2, "RIGHT":3}
+
+LOOP_WINDOW = 20
+LOOP_MIN_UNIQUE = 6
+LOOP_PENALTY = -1.0
 
 
 class Agent:
@@ -172,6 +177,10 @@ def play_episode(agent, learn=True, visual=False, terminal_output=False,
     steps = 0
     previous_action = None
 
+    recent_positions = deque(maxlen=LOOP_WINDOW)
+    if game.snake():
+        recent_positions.append(game.snake()[0])
+
     if (visual):
         display.draw(game.board)
 
@@ -190,6 +199,7 @@ def play_episode(agent, learn=True, visual=False, terminal_output=False,
 
         if (game.snake()):
             max_length = max(max_length, len(game.snake()))
+            recent_positions.append(game.snake()[0])
 
         if (terminal_output):
             print(f"\n{action}\n")
@@ -200,6 +210,9 @@ def play_episode(agent, learn=True, visual=False, terminal_output=False,
             display.tick(fps)
 
         reward = reward_for(event)
+        if len(recent_positions) == LOOP_WINDOW:
+            if len(set(recent_positions)) <= LOOP_MIN_UNIQUE:
+                reward += LOOP_PENALTY
 
         if (game.game_over):
             next_state = state
