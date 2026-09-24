@@ -48,11 +48,12 @@ class Menu:
         self.options = [
             {"name": "save path", "type": "str", "val": "models/my_model.txt", "edit": False},
             {"name": "load path", "type": "str", "val": "", "edit": False},
-            {"name": "sessions", "type": "int", "val": 20, "edit": False},
-            {"name": "max steps", "type": "int", "val": 2000, "edit": False},
             {"name": "learning", "type": "bool", "val": True, "edit": False},
             {"name": "terminal", "type": "bool", "val": False, "edit": False},
             {"name": "display", "type": "bool", "val": True, "edit": False},
+            {"name": "sessions", "type": "int", "val": 20, "edit": False},
+            {"name": "max steps", "type": "int", "val": 2000, "edit": False},
+            {"name": "board size", "type": "int", "val": 10, "edit": False},
             {"name": "fps", "type": "int", "val": 8, "edit": False},
             {"name": "LAUNCH", "type": "action", "val": None, "edit": False}
         ]
@@ -80,24 +81,23 @@ class Menu:
                     self.title_image, 
                     (int(base_w * pulse_scale), int(base_h * pulse_scale))
                 )
-                title_rect = scaled_title.get_rect(center=(self.width // 2, 350 + int(offset_y)))
+                title_rect = scaled_title.get_rect(center=(self.width // 2, 300 + int(offset_y)))
                 self.screen.blit(scaled_title, title_rect)
             else:
                 title_surf = self.title_font.render("Learn2Slither", True, (255, 255, 255))
                 self.screen.blit(title_surf, (self.width // 2 - title_surf.get_width() // 2, 50))
 
-            left_col_x = 100
+            left_col_x = 135
             right_col_x = 548
-            start_y = 200
-            y_spacing = 100
+            start_y = 150
+            y_spacing = 85
 
             option_rects = []
 
             for i, opt in enumerate(self.options):
-                col = 0 if i < 4 or i == 8 else 1
-                row = i if col == 0 else i - 4
+                is_launch = (opt["name"] == "LAUNCH")
 
-                if (i == 8):
+                if (is_launch):
                     x = self.width // 2
                     y = 635
                     
@@ -121,6 +121,13 @@ class Menu:
                         surf = self.font.render("-- LAUNCH --", True, color)
                         self.screen.blit(surf, rect)
                 else:
+                    if i < 5:
+                        col = 0
+                        row = i
+                    else:
+                        col = 1
+                        row = i - 4
+
                     x = left_col_x if col == 0 else right_col_x
                     y = start_y + (row * y_spacing)
 
@@ -210,10 +217,22 @@ class Menu:
                                     for o in self.options:
                                         o["edit"] = False
                                     active_opt["edit"] = True
-                                elif (active_opt["name"] == "LAUNCH" or idx == len(self.options) - 1):
+                                elif (active_opt["name"] == "LAUNCH"):
                                     self.execute_launch()
                         if not clicked_any:
                             self.selected_index = None
+
+                    elif event.button in (4, 5):
+                        if self.selected_index is not None:
+                            active_opt = self.options[self.selected_index]
+                            if active_opt["type"] == "int":
+                                delta = 1 if event.button == 4 else -1
+                                if "sessions" in active_opt["name"]:
+                                    active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                                elif "board size" in active_opt["name"]:
+                                    active_opt["val"] = max(3, active_opt["val"] + delta)
+                                else:
+                                    active_opt["val"] = max(1, active_opt["val"] + delta)
 
                 elif (event.type == pygame.KEYDOWN):
                     if (self.selected_index is None):
@@ -241,6 +260,8 @@ class Menu:
                                 delta = 1 if event.key == pygame.K_RIGHT else -1
                                 if ("sessions" in active_opt["name"]):
                                     active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                                elif "board size" in active_opt["name"]:
+                                    active_opt["val"] = max(5, active_opt["val"] + delta)
                                 else:
                                     active_opt["val"] = max(1, active_opt["val"] + delta)
                         elif (event.key == pygame.K_RETURN):
@@ -248,7 +269,7 @@ class Menu:
                                 active_opt["val"] = not active_opt["val"]
                             elif (active_opt["type"] == "str"):
                                 active_opt["edit"] = True
-                            elif (active_opt["name"] == "LAUNCH" or self.selected_index == len(self.options) - 1):
+                            elif (active_opt["name"] == "LAUNCH"):
                                 self.execute_launch()
 
             clock.tick(30)
@@ -276,6 +297,7 @@ class Menu:
             terminal_output=config["terminal"],
             fps=int(config["fps"]),
             max_steps=int(config["max steps"]),
+            board_size=int(config["board size"]),
         )
 
         sys.exit(main())

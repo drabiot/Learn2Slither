@@ -5,6 +5,7 @@ import random
 import sys
 from collections import deque
 
+from environment import set_grid_size
 from interpreter import compute_vision, vision_to_state, reward_for, Game
 
 ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
@@ -232,7 +233,7 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
 
 
 def train(sessions, agent, save_path=None, learn=True, visual=False,
-          terminal_output=False, fps=8, max_steps=2000):
+          terminal_output=False, fps=8, max_steps=2000, board_size=10):
     """
     Train our Agent and display stats about the training
 
@@ -248,6 +249,7 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
         max_steps (int): max step the agent can do before dying
         to prevent infinite loop
     """
+    set_grid_size(board_size)
     display = None
 
     if (visual):
