@@ -149,7 +149,7 @@ class Agent:
         return (agent)
 
 
-def play_episode(agent, learn=True, visual=False, terminal_output=False,
+def play_epoch(agent, learn=True, visual=False, terminal_output=False,
                  display=None, fps=8, max_steps=2000, session=1, session_max=100):
     """
     Train sessions by session our agent
@@ -258,7 +258,7 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
     length_mean = 0
 
     for session in range(1, sessions + 1):
-        stats = play_episode(
+        stats = play_epoch(
             agent, learn=learn, visual=visual,
             terminal_output=terminal_output, display=display, fps=fps,
             max_steps=max_steps, session=session, session_max=sessions

@@ -3,6 +3,7 @@ import sys
 import os
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 import pygame
+import math
 
 from agent import Agent, train
 
@@ -16,6 +17,34 @@ class Menu:
         self.font = pygame.font.Font(None, 36)
         self.title_font = pygame.font.Font(None, 54)
 
+        try:
+            self.bg_image = pygame.image.load("texture/menu_background.png").convert()
+            self.bg_image = pygame.transform.scale(self.bg_image, (self.width, self.height))
+
+            self.title_image = pygame.image.load("texture/menu_title.png").convert_alpha()
+            self.launch_bar_image = pygame.image.load("texture/menu_launch_bar.png").convert_alpha()
+            self.launch_bar_hover_image = pygame.image.load("texture/menu_launch_bar_hover.png").convert_alpha()
+            
+            self.on_switch_image = pygame.image.load("texture/menu_on_switch.png").convert_alpha()
+            self.off_switch_image = pygame.image.load("texture/menu_off_switch.png").convert_alpha()
+            self.on_switch_hover_image = pygame.image.load("texture/menu_on_switch_hover.png").convert_alpha()
+            self.off_switch_hover_image = pygame.image.load("texture/menu_off_switch_hover.png").convert_alpha()
+
+            self.learning_label_img = pygame.image.load("texture/learning.png").convert_alpha()
+            self.terminal_label_img = pygame.image.load("texture/terminal.png").convert_alpha()
+            self.display_label_img = pygame.image.load("texture/display.png").convert_alpha()
+        except FileNotFoundError:
+            self.bg_image = None
+            self.launch_bar_image = None
+            self.launch_bar_hover_image = None
+            self.on_switch_image = None
+            self.off_switch_image = None
+            self.on_switch_hover_image = None
+            self.off_switch_hover_image = None
+            self.learning_label_img = None
+            self.terminal_label_img = None
+            self.display_label_img = None
+
         self.options = [
             {"name": "save path", "type": "str", "val": "models/my_model.txt", "edit": False},
             {"name": "load path", "type": "str", "val": "", "edit": False},
@@ -27,49 +56,127 @@ class Menu:
             {"name": "fps", "type": "int", "val": 8, "edit": False},
             {"name": "LAUNCH", "type": "action", "val": None, "edit": False}
         ]
-        self.selected_index = 0
+        self.selected_index = None 
 
     def run(self):
         clock = pygame.time.Clock()
         running = True
+        start_time = pygame.time.get_ticks()
 
         while (running):
-            self.screen.fill((30, 30, 30))
+            if (hasattr(self, "bg_image") and self.bg_image):
+                self.screen.blit(self.bg_image, (0, 0))
+            else:
+                self.screen.fill((30, 30, 30))
 
-            title_surf = self.title_font.render("Learn2Slither", True, (255, 255, 255))
-            self.screen.blit(title_surf, (self.width // 2 - title_surf.get_width() // 2, 50))
+            elapsed_time = (pygame.time.get_ticks() - start_time) / 1000.0
+            if (hasattr(self, "title_image") and self.title_image):
+                base_scale = 5.0 
+                offset_y = math.sin(elapsed_time * 3) * 4
+                pulse_scale = base_scale + (math.sin(elapsed_time * 4) * 0.1)
+                
+                base_w, base_h = self.title_image.get_size()
+                scaled_title = pygame.transform.scale(
+                    self.title_image, 
+                    (int(base_w * pulse_scale), int(base_h * pulse_scale))
+                )
+                title_rect = scaled_title.get_rect(center=(self.width // 2, 350 + int(offset_y)))
+                self.screen.blit(scaled_title, title_rect)
+            else:
+                title_surf = self.title_font.render("Learn2Slither", True, (255, 255, 255))
+                self.screen.blit(title_surf, (self.width // 2 - title_surf.get_width() // 2, 50))
 
             left_col_x = 100
-            right_col_x = 450
-            start_y = 180
-            y_spacing = 45
+            right_col_x = 548
+            start_y = 200
+            y_spacing = 100
+
+            option_rects = []
 
             for i, opt in enumerate(self.options):
                 col = 0 if i < 4 or i == 8 else 1
-                row = i if col == 0 else i -4
+                row = i if col == 0 else i - 4
 
                 if (i == 8):
-                    x = self.width // 2 -100
-                    y = 480
+                    x = self.width // 2
+                    y = 635
+                    
+                    is_hovered = (i == self.selected_index)
+                    active_image = self.launch_bar_hover_image if (is_hovered and self.launch_bar_hover_image) else self.launch_bar_image
+
+                    if (active_image):
+                        base_launch_scale = 6.6
+                        bw, bh = active_image.get_size()
+                        
+                        scaled_launch = pygame.transform.scale(
+                            active_image, 
+                            (int(bw * base_launch_scale), int(bh * base_launch_scale))
+                        )
+                        rect = scaled_launch.get_rect(center=(x, y))
+                        self.screen.blit(scaled_launch, rect)
+                    else:
+                        rect = pygame.Rect(0, 0, 200, 40)
+                        rect.center = (x, y)
+                        color = (0, 255, 0) if is_hovered else (200, 200, 200)
+                        surf = self.font.render("-- LAUNCH --", True, color)
+                        self.screen.blit(surf, rect)
                 else:
                     x = left_col_x if col == 0 else right_col_x
                     y = start_y + (row * y_spacing)
 
-                color = (0, 255, 0) if i == self.selected_index else (200, 200, 200)
-                if (opt["edit"]):
-                    color = (255, 255, 0)
+                    color = (0, 255, 0) if i == self.selected_index else (200, 200, 200)
+                    if (opt["edit"]):
+                        color = (255, 255, 0)
 
-                if (opt["type"] == "bool"):
-                    val_str = "On" if opt["val"] else "Off"
-                    text = f"{opt['name']}: {val_str}"
-                elif (opt["type"] == "action"):
-                    text = f"-- {opt['name']} --"
-                else:
-                    val_str = str(opt["val"]) if opt["val"] != "" else "<none>"
-                    text = f"{opt['name']}: {val_str}"
+                    if (opt["type"] == "bool"):
+                        label_img = None
+                        if (opt["name"] == "learning"):
+                            label_img = self.learning_label_img
+                        elif (opt["name"] == "terminal"):
+                            label_img = self.terminal_label_img
+                        elif (opt["name"] == "display"):
+                            label_img = self.display_label_img
 
-                surf = self.font.render(text, True, color)
-                self.screen.blit(surf, (x, y))
+                        is_hovered = (i == self.selected_index)
+
+                        if (is_hovered):
+                            switch_img = self.on_switch_hover_image if opt["val"] else self.off_switch_hover_image
+                            if (not switch_img):
+                                switch_img = self.on_switch_image if opt["val"] else self.off_switch_image
+                        else:
+                            switch_img = self.on_switch_image if opt["val"] else self.off_switch_image
+
+                        if (label_img and switch_img):
+                            label_scale = 2.5
+                            snake_scale = 4.0
+
+                            lw, lh = label_img.get_size()
+                            scaled_label = pygame.transform.scale(label_img, (int(lw * label_scale), int(lh * label_scale)))
+                            label_rect = scaled_label.get_rect(topleft=(x, y))
+                            self.screen.blit(scaled_label, label_rect)
+
+                            sw, sh = switch_img.get_size()
+                            scaled_switch = pygame.transform.scale(switch_img, (int(sw * snake_scale), int(sh * snake_scale)))
+                            
+                            switch_rect = scaled_switch.get_rect(topleft=(x, label_rect.bottom + 5))
+                            self.screen.blit(scaled_switch, switch_rect)
+
+                            total_width = max(label_rect.width, switch_rect.width)
+                            total_height = label_rect.height + 5 + switch_rect.height
+                            rect = pygame.Rect(x, y, total_width, total_height)
+                        else:
+                            val_str = "On" if opt["val"] else "Off"
+                            surf = self.font.render(f"{opt['name']}: {val_str}", True, color)
+                            rect = surf.get_rect(topleft=(x, y))
+                            self.screen.blit(surf, rect)
+                    else:
+                        val_str = str(opt["val"]) if opt["val"] != "" else "<none>"
+                        text = f"{opt['name']}: {val_str}"
+                        surf = self.font.render(text, True, color)
+                        rect = surf.get_rect(topleft=(x, y))
+                        self.screen.blit(surf, rect)
+
+                option_rects.append((i, rect))
 
             pygame.display.flip()
 
@@ -77,7 +184,42 @@ class Menu:
                 if (event.type == pygame.QUIT):
                     pygame.quit()
                     sys.exit()
+
+                elif (event.type == pygame.MOUSEMOTION):
+                    mouse_pos = pygame.mouse.get_pos()
+                    hovered_any = False
+                    for idx, rect in option_rects:
+                        if (rect.collidepoint(mouse_pos)):
+                            self.selected_index = idx
+                            hovered_any = True
+                    if (not hovered_any):
+                        self.selected_index = None
+
+                elif (event.type == pygame.MOUSEBUTTONDOWN):
+                    if (event.button == 1):
+                        mouse_pos = pygame.mouse.get_pos()
+                        clicked_any = False
+                        for idx, rect in option_rects:
+                            if (rect.collidepoint(mouse_pos)):
+                                clicked_any = True
+                                self.selected_index = idx
+                                active_opt = self.options[idx]
+                                if (active_opt["type"] == "bool"):
+                                    active_opt["val"] = not active_opt["val"]
+                                elif (active_opt["type"] == "str"):
+                                    for o in self.options:
+                                        o["edit"] = False
+                                    active_opt["edit"] = True
+                                elif (active_opt["name"] == "LAUNCH" or idx == len(self.options) - 1):
+                                    self.execute_launch()
+                        if not clicked_any:
+                            self.selected_index = None
+
                 elif (event.type == pygame.KEYDOWN):
+                    if (self.selected_index is None):
+                        self.selected_index = 0
+                        continue
+
                     active_opt = self.options[self.selected_index]
 
                     if (active_opt["edit"]):
