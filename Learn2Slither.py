@@ -84,10 +84,10 @@ class Menu:
             {"name": "learning", "type": "bool", "val": True, "edit": False},
             {"name": "terminal", "type": "bool", "val": False, "edit": False},
             {"name": "display", "type": "bool", "val": True, "edit": False},
-            {"name": "sessions", "type": "int", "val": 20, "edit": False},
-            {"name": "max steps", "type": "int", "val": 2000, "edit": False},
-            {"name": "board size", "type": "int", "val": 10, "edit": False},
-            {"name": "fps", "type": "int", "val": 8, "edit": False},
+            {"name": "sessions", "type": "int", "val": 20, "edit": False, "edit_buffer": ""},
+            {"name": "max steps", "type": "int", "val": 2000, "edit": False, "edit_buffer": ""},
+            {"name": "board size", "type": "int", "val": 10, "edit": False, "edit_buffer": ""},
+            {"name": "fps", "type": "int", "val": 8, "edit": False, "edit_buffer": ""},
             {"name": "LAUNCH", "type": "action", "val": None, "edit": False}
         ]
         self.selected_index = None 
@@ -238,9 +238,9 @@ class Menu:
                             switch_rect = scaled_switch.get_rect(topleft=(x, label_rect.bottom + 5))
                             self.screen.blit(scaled_switch, switch_rect)
 
-                            val_str = str(opt["val"])
+                            val_str = opt["edit_buffer"] if opt["edit"] else str(opt["val"])
                             outline_color = (0, 0, 0)
-                            text_color = (255, 255, 255)
+                            text_color = (255, 255, 0) if opt["edit"] else (255, 255, 255)
 
                             val_center = (switch_rect.centerx - 15, switch_rect.centery)
 
@@ -257,7 +257,7 @@ class Menu:
                             total_height = label_rect.height + 5 + switch_rect.height
                             rect = pygame.Rect(x, y, total_width, total_height)
                         else:
-                            val_str = str(opt["val"])
+                            val_str = opt["edit_buffer"] if opt["edit"] else str(opt["val"])
                             text = f"{opt['name']}: {val_str}"
                             surf = self.font.render(text, True, color)
                             rect = surf.get_rect(topleft=(x, y))
@@ -328,17 +328,25 @@ class Menu:
                 elif (event.type == pygame.MOUSEMOTION):
                     mouse_pos = pygame.mouse.get_pos()
                     hovered_any = False
+                    hovered_idx = None
                     for idx, rect in option_rects:
                         if (rect.collidepoint(mouse_pos)):
-                            self.selected_index = idx
+                            hovered_idx = idx
                             hovered_any = True
-                    if (not hovered_any):
-                        self.selected_index = None
+
+                    for idx, o in enumerate(self.options):
+                        if (o["type"] == "int" and o["edit"] and idx != hovered_idx):
+                            self.commit_int_edit(o)
+
+                    self.selected_index = hovered_idx if hovered_any else None
 
                 elif (event.type == pygame.MOUSEBUTTONDOWN):
                     if (event.button == 1):
                         mouse_pos = pygame.mouse.get_pos()
                         clicked_any = False
+                        for o in self.options:
+                            if (o["type"] == "int" and o["edit"]):
+                                self.commit_int_edit(o)
                         for idx, rect in option_rects:
                             if (rect.collidepoint(mouse_pos)):
                                 clicked_any = True
@@ -346,6 +354,9 @@ class Menu:
                                 active_opt = self.options[idx]
                                 if (active_opt["type"] == "bool"):
                                     active_opt["val"] = not active_opt["val"]
+                                elif (active_opt["type"] == "int"):
+                                    active_opt["edit"] = True
+                                    active_opt["edit_buffer"] = str(active_opt["val"])
                                 elif (active_opt["type"] == "str"):
                                     self.open_file_dialog(active_opt)
                                 elif (active_opt["name"] == "LAUNCH"):
@@ -359,11 +370,11 @@ class Menu:
                             if active_opt["type"] == "int":
                                 delta = 1 if event.button == 4 else -1
                                 if "sessions" in active_opt["name"]:
-                                    active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                                    active_opt["val"] = min(999999, max(1, active_opt["val"] + delta))
                                 elif "board size" in active_opt["name"]:
-                                    active_opt["val"] = max(3, active_opt["val"] + delta)
+                                    active_opt["val"] = min(999999, max(3, active_opt["val"] + delta))
                                 else:
-                                    active_opt["val"] = max(1, active_opt["val"] + delta)
+                                    active_opt["val"] = min(999999, max(1, active_opt["val"] + delta))
 
                 elif (event.type == pygame.KEYDOWN):
                     if (self.selected_index is None):
@@ -371,6 +382,19 @@ class Menu:
                         continue
 
                     active_opt = self.options[self.selected_index]
+
+                    if (active_opt["type"] == "int" and active_opt["edit"]):
+                        if (event.key == pygame.K_RETURN):
+                            self.commit_int_edit(active_opt)
+                        elif (event.key == pygame.K_ESCAPE):
+                            active_opt["edit"] = False
+                        elif (event.key == pygame.K_BACKSPACE):
+                            active_opt["edit_buffer"] = active_opt["edit_buffer"][:-1]
+                        elif (event.unicode.isdigit()):
+                            new_buffer = active_opt["edit_buffer"] + event.unicode
+                            if (int(new_buffer) <= 999999):
+                                active_opt["edit_buffer"] = new_buffer
+                        continue
 
                     if (event.key == pygame.K_UP):
                         self.selected_index = (self.selected_index - 1) % len(self.options)
@@ -382,20 +406,37 @@ class Menu:
                         elif (active_opt["type"] == "int"):
                             delta = 1 if event.key == pygame.K_RIGHT else -1
                             if ("sessions" in active_opt["name"]):
-                                active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                                active_opt["val"] = min(999999, max(1, active_opt["val"] + delta))
                             elif "board size" in active_opt["name"]:
-                                active_opt["val"] = max(5, active_opt["val"] + delta)
+                                active_opt["val"] = min(999999, max(5, active_opt["val"] + delta))
                             else:
-                                active_opt["val"] = max(1, active_opt["val"] + delta)
+                                active_opt["val"] = min(999999, max(1, active_opt["val"] + delta))
                     elif (event.key == pygame.K_RETURN):
                         if (active_opt["type"] == "bool"):
                             active_opt["val"] = not active_opt["val"]
+                        elif (active_opt["type"] == "int"):
+                            active_opt["edit"] = True
+                            active_opt["edit_buffer"] = str(active_opt["val"])
                         elif (active_opt["type"] == "str"):
                             self.open_file_dialog(active_opt)
                         elif (active_opt["name"] == "LAUNCH"):
                             self.execute_launch()
 
             clock.tick(30)
+
+    def commit_int_edit(self, opt):
+        buffer = opt["edit_buffer"]
+        if (buffer != ""):
+            new_val = int(buffer)
+            new_val = min(999999, new_val)
+            if ("sessions" in opt["name"]):
+                new_val = max(1, new_val)
+            elif "board size" in opt["name"]:
+                new_val = max(3, new_val)
+            else:
+                new_val = max(1, new_val)
+            opt["val"] = new_val
+        opt["edit"] = False
 
     def open_file_dialog(self, opt):
         models_dir = os.path.join(os.getcwd(), "models")
