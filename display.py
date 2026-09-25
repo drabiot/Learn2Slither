@@ -1,8 +1,8 @@
 import os
 import math
 from environment import GRID_COLS, GRID_ROWS
+import pygame
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
-import pygame  # noqa: E402
 
 CELL_SIZE = 40
 
