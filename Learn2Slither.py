@@ -33,6 +33,14 @@ class Menu:
             self.learning_label_img = pygame.image.load("texture/learning.png").convert_alpha()
             self.terminal_label_img = pygame.image.load("texture/terminal.png").convert_alpha()
             self.display_label_img = pygame.image.load("texture/display.png").convert_alpha()
+
+            self.menu_int_image = pygame.image.load("texture/menu_int.png").convert_alpha()
+            self.menu_int_hover_image = pygame.image.load("texture/menu_int_hover.png").convert_alpha()
+
+            self.sessions_label_img = pygame.image.load("texture/sessions.png").convert_alpha()
+            self.max_steps_label_img = pygame.image.load("texture/max_steps.png").convert_alpha()
+            self.board_size_label_img = pygame.image.load("texture/board_size.png").convert_alpha()
+            self.fps_label_img = pygame.image.load("texture/fps.png").convert_alpha()
         except FileNotFoundError:
             self.bg_image = None
             self.launch_bar_image = None
@@ -44,6 +52,18 @@ class Menu:
             self.learning_label_img = None
             self.terminal_label_img = None
             self.display_label_img = None
+
+            self.menu_int_image = None
+            self.menu_int_hover_image = None
+            self.sessions_label_img = None
+            self.max_steps_label_img = None
+            self.board_size_label_img = None
+            self.fps_label_img = None
+
+        try:
+            self.pixel_font = pygame.font.Font("texture/pixel_font.ttf", 30)
+        except FileNotFoundError:
+            self.pixel_font = pygame.font.Font(None, 30)
 
         self.options = [
             {"name": "save path", "type": "str", "val": "models/my_model.txt", "edit": False},
@@ -176,6 +196,59 @@ class Menu:
                             surf = self.font.render(f"{opt['name']}: {val_str}", True, color)
                             rect = surf.get_rect(topleft=(x, y))
                             self.screen.blit(surf, rect)
+                    elif (opt["type"] == "int"):
+                        label_img = None
+                        if (opt["name"] == "sessions"):
+                            label_img = self.sessions_label_img
+                        elif (opt["name"] == "max steps"):
+                            label_img = self.max_steps_label_img
+                        elif (opt["name"] == "board size"):
+                            label_img = self.board_size_label_img
+                        elif (opt["name"] == "fps"):
+                            label_img = self.fps_label_img
+
+                        is_hovered = (i == self.selected_index)
+                        switch_img = self.menu_int_hover_image if (is_hovered and self.menu_int_hover_image) else self.menu_int_image
+
+                        if (label_img and switch_img):
+                            label_scale = 2.5
+                            snake_scale = 4.0
+
+                            lw, lh = label_img.get_size()
+                            scaled_label = pygame.transform.scale(label_img, (int(lw * label_scale), int(lh * label_scale)))
+                            label_rect = scaled_label.get_rect(topleft=(x, y))
+                            self.screen.blit(scaled_label, label_rect)
+
+                            sw, sh = switch_img.get_size()
+                            scaled_switch = pygame.transform.scale(switch_img, (int(sw * snake_scale), int(sh * snake_scale)))
+
+                            switch_rect = scaled_switch.get_rect(topleft=(x, label_rect.bottom + 5))
+                            self.screen.blit(scaled_switch, switch_rect)
+
+                            val_str = str(opt["val"])
+                            outline_color = (0, 0, 0)
+                            text_color = (255, 255, 255)
+
+                            val_center = (switch_rect.centerx - 15, switch_rect.centery)
+
+                            outline_surf = self.pixel_font.render(val_str, True, outline_color)
+                            for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2), (-2, -2), (2, -2), (-2, 2), (2, 2)]:
+                                outline_rect = outline_surf.get_rect(center=(val_center[0] + dx, val_center[1] + dy))
+                                self.screen.blit(outline_surf, outline_rect)
+
+                            val_surf = self.pixel_font.render(val_str, True, text_color)
+                            val_rect = val_surf.get_rect(center=val_center)
+                            self.screen.blit(val_surf, val_rect)
+
+                            total_width = max(label_rect.width, switch_rect.width)
+                            total_height = label_rect.height + 5 + switch_rect.height
+                            rect = pygame.Rect(x, y, total_width, total_height)
+                        else:
+                            val_str = str(opt["val"])
+                            text = f"{opt['name']}: {val_str}"
+                            surf = self.font.render(text, True, color)
+                            rect = surf.get_rect(topleft=(x, y))
+                            self.screen.blit(surf, rect)
                     else:
                         val_str = str(opt["val"]) if opt["val"] != "" else "<none>"
                         text = f"{opt['name']}: {val_str}"
@@ -228,7 +301,7 @@ class Menu:
                             if active_opt["type"] == "int":
                                 delta = 1 if event.button == 4 else -1
                                 if "sessions" in active_opt["name"]:
-                                    active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                                    active_opt["val"] = max(1, active_opt["val"] + delta)
                                 elif "board size" in active_opt["name"]:
                                     active_opt["val"] = max(3, active_opt["val"] + delta)
                                 else:
@@ -259,7 +332,7 @@ class Menu:
                             elif (active_opt["type"] == "int"):
                                 delta = 1 if event.key == pygame.K_RIGHT else -1
                                 if ("sessions" in active_opt["name"]):
-                                    active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                                    active_opt["val"] = max(1, active_opt["val"] + delta)
                                 elif "board size" in active_opt["name"]:
                                     active_opt["val"] = max(5, active_opt["val"] + delta)
                                 else:
