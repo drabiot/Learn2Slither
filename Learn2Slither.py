@@ -4,6 +4,8 @@ import os
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 import pygame
 import math
+import tkinter as tk
+from tkinter import filedialog
 
 from agent import Agent, train
 
@@ -41,6 +43,12 @@ class Menu:
             self.max_steps_label_img = pygame.image.load("texture/max_steps.png").convert_alpha()
             self.board_size_label_img = pygame.image.load("texture/board_size.png").convert_alpha()
             self.fps_label_img = pygame.image.load("texture/fps.png").convert_alpha()
+
+            self.menu_path_image = pygame.image.load("texture/menu_path.png").convert_alpha()
+            self.menu_path_hover_image = pygame.image.load("texture/menu_path_hover.png").convert_alpha()
+
+            self.save_path_label_img = pygame.image.load("texture/save_path.png").convert_alpha()
+            self.load_path_label_img = pygame.image.load("texture/load_path.png").convert_alpha()
         except FileNotFoundError:
             self.bg_image = None
             self.launch_bar_image = None
@@ -59,6 +67,11 @@ class Menu:
             self.max_steps_label_img = None
             self.board_size_label_img = None
             self.fps_label_img = None
+
+            self.menu_path_image = None
+            self.menu_path_hover_image = None
+            self.save_path_label_img = None
+            self.load_path_label_img = None
 
         try:
             self.pixel_font = pygame.font.Font("texture/pixel_font.ttf", 30)
@@ -250,11 +263,54 @@ class Menu:
                             rect = surf.get_rect(topleft=(x, y))
                             self.screen.blit(surf, rect)
                     else:
-                        val_str = str(opt["val"]) if opt["val"] != "" else "<none>"
-                        text = f"{opt['name']}: {val_str}"
-                        surf = self.font.render(text, True, color)
-                        rect = surf.get_rect(topleft=(x, y))
-                        self.screen.blit(surf, rect)
+                        label_img = None
+                        if (opt["name"] == "save path"):
+                            label_img = self.save_path_label_img
+                        elif (opt["name"] == "load path"):
+                            label_img = self.load_path_label_img
+
+                        is_hovered = (i == self.selected_index)
+                        switch_img = self.menu_path_hover_image if (is_hovered and self.menu_path_hover_image) else self.menu_path_image
+
+                        if (label_img and switch_img):
+                            label_scale = 2.5
+                            snake_scale = 4.0
+
+                            lw, lh = label_img.get_size()
+                            scaled_label = pygame.transform.scale(label_img, (int(lw * label_scale), int(lh * label_scale)))
+                            label_rect = scaled_label.get_rect(topleft=(x, y))
+                            self.screen.blit(scaled_label, label_rect)
+
+                            sw, sh = switch_img.get_size()
+                            scaled_switch = pygame.transform.scale(switch_img, (int(sw * snake_scale), int(sh * snake_scale)))
+
+                            switch_rect = scaled_switch.get_rect(topleft=(x, label_rect.bottom + 5))
+                            self.screen.blit(scaled_switch, switch_rect)
+
+                            display_str = os.path.basename(opt["val"]) if opt["val"] else "<none>"
+                            outline_color = (0, 0, 0)
+                            text_color = (255, 255, 255)
+
+                            val_center = (switch_rect.centerx - 15, switch_rect.centery)
+
+                            outline_surf = self.pixel_font.render(display_str, True, outline_color)
+                            for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2), (-2, -2), (2, -2), (-2, 2), (2, 2)]:
+                                outline_rect = outline_surf.get_rect(center=(val_center[0] + dx, val_center[1] + dy))
+                                self.screen.blit(outline_surf, outline_rect)
+
+                            val_surf = self.pixel_font.render(display_str, True, text_color)
+                            val_rect = val_surf.get_rect(center=val_center)
+                            self.screen.blit(val_surf, val_rect)
+
+                            total_width = max(label_rect.width, switch_rect.width)
+                            total_height = label_rect.height + 5 + switch_rect.height
+                            rect = pygame.Rect(x, y, total_width, total_height)
+                        else:
+                            val_str = os.path.basename(opt["val"]) if opt["val"] != "" else "<none>"
+                            text = f"{opt['name']}: {val_str}"
+                            surf = self.font.render(text, True, color)
+                            rect = surf.get_rect(topleft=(x, y))
+                            self.screen.blit(surf, rect)
 
                 option_rects.append((i, rect))
 
@@ -287,9 +343,7 @@ class Menu:
                                 if (active_opt["type"] == "bool"):
                                     active_opt["val"] = not active_opt["val"]
                                 elif (active_opt["type"] == "str"):
-                                    for o in self.options:
-                                        o["edit"] = False
-                                    active_opt["edit"] = True
+                                    self.open_file_dialog(active_opt)
                                 elif (active_opt["name"] == "LAUNCH"):
                                     self.execute_launch()
                         if not clicked_any:
@@ -301,7 +355,7 @@ class Menu:
                             if active_opt["type"] == "int":
                                 delta = 1 if event.button == 4 else -1
                                 if "sessions" in active_opt["name"]:
-                                    active_opt["val"] = max(1, active_opt["val"] + delta)
+                                    active_opt["val"] = max(1, active_opt["val"] + delta * 5)
                                 elif "board size" in active_opt["name"]:
                                     active_opt["val"] = max(3, active_opt["val"] + delta)
                                 else:
@@ -314,38 +368,58 @@ class Menu:
 
                     active_opt = self.options[self.selected_index]
 
-                    if (active_opt["edit"]):
-                        if (event.key == pygame.K_RETURN):
-                            active_opt["edit"] = False
-                        elif (event.key == pygame.K_BACKSPACE):
-                            active_opt["val"] = active_opt["val"][:-1]
-                        else:
-                            active_opt["val"] += event.unicode
-                    else:
-                        if (event.key == pygame.K_UP):
-                            self.selected_index = (self.selected_index - 1) % len(self.options)
-                        elif (event.key == pygame.K_DOWN):
-                            self.selected_index = (self.selected_index + 1) % len(self.options)
-                        elif (event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT):
-                            if (active_opt["type"] == "bool"):
-                                active_opt["val"] = not active_opt["val"]
-                            elif (active_opt["type"] == "int"):
-                                delta = 1 if event.key == pygame.K_RIGHT else -1
-                                if ("sessions" in active_opt["name"]):
-                                    active_opt["val"] = max(1, active_opt["val"] + delta)
-                                elif "board size" in active_opt["name"]:
-                                    active_opt["val"] = max(5, active_opt["val"] + delta)
-                                else:
-                                    active_opt["val"] = max(1, active_opt["val"] + delta)
-                        elif (event.key == pygame.K_RETURN):
-                            if (active_opt["type"] == "bool"):
-                                active_opt["val"] = not active_opt["val"]
-                            elif (active_opt["type"] == "str"):
-                                active_opt["edit"] = True
-                            elif (active_opt["name"] == "LAUNCH"):
-                                self.execute_launch()
+                    if (event.key == pygame.K_UP):
+                        self.selected_index = (self.selected_index - 1) % len(self.options)
+                    elif (event.key == pygame.K_DOWN):
+                        self.selected_index = (self.selected_index + 1) % len(self.options)
+                    elif (event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT):
+                        if (active_opt["type"] == "bool"):
+                            active_opt["val"] = not active_opt["val"]
+                        elif (active_opt["type"] == "int"):
+                            delta = 1 if event.key == pygame.K_RIGHT else -1
+                            if ("sessions" in active_opt["name"]):
+                                active_opt["val"] = max(1, active_opt["val"] + delta * 5)
+                            elif "board size" in active_opt["name"]:
+                                active_opt["val"] = max(5, active_opt["val"] + delta)
+                            else:
+                                active_opt["val"] = max(1, active_opt["val"] + delta)
+                    elif (event.key == pygame.K_RETURN):
+                        if (active_opt["type"] == "bool"):
+                            active_opt["val"] = not active_opt["val"]
+                        elif (active_opt["type"] == "str"):
+                            self.open_file_dialog(active_opt)
+                        elif (active_opt["name"] == "LAUNCH"):
+                            self.execute_launch()
 
             clock.tick(30)
+
+    def open_file_dialog(self, opt):
+        models_dir = os.path.join(os.getcwd(), "models")
+        os.makedirs(models_dir, exist_ok=True)
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+
+        try:
+            if (opt["name"] == "save path"):
+                path = filedialog.asksaveasfilename(
+                    initialdir=models_dir,
+                    title="Choisir où exporter le modèle",
+                    defaultextension=".txt",
+                    filetypes=[("Fichiers texte", "*.txt"), ("Tous les fichiers", "*.*")],
+                )
+            else:
+                path = filedialog.askopenfilename(
+                    initialdir=models_dir,
+                    title="Choisir un modèle à importer",
+                    filetypes=[("Fichiers texte", "*.txt"), ("Tous les fichiers", "*.*")],
+                )
+        finally:
+            root.destroy()
+
+        if (path):
+            opt["val"] = path
 
     def execute_launch(self):
         config = {opt["name"]: opt["val"] for opt in self.options if opt["type"] != "action"}
