@@ -288,6 +288,8 @@ class Menu:
                             self.screen.blit(scaled_switch, switch_rect)
 
                             display_str = os.path.basename(opt["val"]) if opt["val"] else "<none>"
+                            if (len(display_str) > 15):
+                                display_str = display_str[:23] + "..."
                             outline_color = (0, 0, 0)
                             text_color = (255, 255, 255)
 
@@ -307,6 +309,8 @@ class Menu:
                             rect = pygame.Rect(x, y, total_width, total_height)
                         else:
                             val_str = os.path.basename(opt["val"]) if opt["val"] != "" else "<none>"
+                            if (len(val_str) > 15):
+                                val_str = val_str[:23] + "..."
                             text = f"{opt['name']}: {val_str}"
                             surf = self.font.render(text, True, color)
                             rect = surf.get_rect(topleft=(x, y))
