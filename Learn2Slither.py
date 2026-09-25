@@ -442,29 +442,166 @@ class Menu:
         models_dir = os.path.join(os.getcwd(), "models")
         os.makedirs(models_dir, exist_ok=True)
 
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes("-topmost", True)
+        is_save = (opt["name"] == "save path")
+        clock = pygame.time.Clock()
+        selecting = True
+        input_text = os.path.basename(opt["val"]) if opt["val"] else "my_model.txt"
+        
+        scroll_offset = 0
+        max_visible_files = 10
+        dragging_scrollbar = False
 
-        try:
-            if (opt["name"] == "save path"):
-                path = filedialog.asksaveasfilename(
-                    initialdir=models_dir,
-                    title="Choisir où exporter le modèle",
-                    defaultextension=".txt",
-                    filetypes=[("Fichiers texte", "*.txt"), ("Tous les fichiers", "*.*")],
-                )
+        sb_x = 575
+        sb_y = 100
+        sb_w = 12
+        sb_h = max_visible_files * 40 - 5
+
+        def draw_outlined_text(text, pos, font_obj, text_color=(255, 255, 255), align="topleft"):
+            outline_color = (0, 0, 0)
+            outline_surf = font_obj.render(text, True, outline_color)
+            for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2), (-2, -2), (2, -2), (-2, 2), (2, 2)]:
+                if align == "center":
+                    orect = outline_surf.get_rect(center=(pos[0] + dx, pos[1] + dy))
+                else:
+                    orect = outline_surf.get_rect(topleft=(pos[0] + dx, pos[1] + dy))
+                self.screen.blit(outline_surf, orect)
+            
+            text_surf = font_obj.render(text, True, text_color)
+            if align == "center":
+                trect = text_surf.get_rect(center=pos)
             else:
-                path = filedialog.askopenfilename(
-                    initialdir=models_dir,
-                    title="Choisir un modèle à importer",
-                    filetypes=[("Fichiers texte", "*.txt"), ("Tous les fichiers", "*.*")],
-                )
-        finally:
-            root.destroy()
+                trect = text_surf.get_rect(topleft=pos)
+            self.screen.blit(text_surf, trect)
 
-        if (path):
-            opt["val"] = path
+        while selecting:
+            if hasattr(self, "bg_image") and self.bg_image:
+                self.screen.blit(self.bg_image, (0, 0))
+            else:
+                self.screen.fill((30, 30, 30))
+
+            draw_outlined_text(f"Choose a File ({'Save' if is_save else 'Load'})", (70, 30), self.font, (255, 255, 255), "topleft")
+
+            try:
+                all_files = [f for f in os.listdir(models_dir) if f.endswith(".txt")]
+            except Exception:
+                all_files = []
+
+            max_scroll = max(0, len(all_files) - max_visible_files)
+            scroll_offset = max(0, min(scroll_offset, max_scroll))
+            visible_files = all_files[scroll_offset : scroll_offset + max_visible_files]
+
+            def update_scroll_from_mouse(my):
+                nonlocal scroll_offset
+                if max_scroll > 0:
+                    rel_y = max(0, min(my - sb_y, sb_h))
+                    fraction = rel_y / sb_h
+                    scroll_offset = round(fraction * max_scroll)
+                    scroll_offset = max(0, min(scroll_offset, max_scroll))
+
+            file_rects = []
+            for idx, file in enumerate(visible_files):
+                f_rect = pygame.Rect(70, 100 + (idx * 40), 500, 35)
+                is_hover = f_rect.collidepoint(pygame.mouse.get_pos())
+                color = (60, 60, 90) if is_hover else (40, 40, 40)
+                
+                pygame.draw.rect(self.screen, color, f_rect)
+                pygame.draw.rect(self.screen, (100, 100, 100), f_rect, 1)
+
+                draw_outlined_text(file, (f_rect.x + 10, f_rect.y + 5), self.font, (255, 255, 255), "topleft")
+                real_idx = scroll_offset + idx
+                file_rects.append((f_rect, os.path.join(models_dir, all_files[real_idx])))
+
+            if len(all_files) > max_visible_files:
+                pygame.draw.rect(self.screen, (40, 40, 40), (sb_x, sb_y, sb_w, sb_h))
+                
+                thumb_h = max(30, sb_h * (max_visible_files / len(all_files)))
+                thumb_y = sb_y + (sb_h - thumb_h) * (scroll_offset / max_scroll) if max_scroll > 0 else sb_y
+                pygame.draw.rect(self.screen, (150, 150, 150), (sb_x, thumb_y, sb_w, thumb_h))
+
+            if is_save:
+                input_rect = pygame.Rect(70, 550, 500, 40)
+                pygame.draw.rect(self.screen, (50, 50, 50), input_rect)
+                pygame.draw.rect(self.screen, (255, 255, 0), input_rect, 2)
+                
+                draw_outlined_text(input_text, (input_rect.x + 10, input_rect.y + 8), self.font, (255, 255, 0), "topleft")
+
+                save_btn_rect = pygame.Rect(600, 550, 100, 40)
+                pygame.draw.rect(self.screen, (0, 150, 0), save_btn_rect)
+                draw_outlined_text("Save", (save_btn_rect.x + 20, save_btn_rect.y + 8), self.font, (255, 255, 255), "topleft")
+            else:
+                save_btn_rect = None
+
+            cancel_rect = pygame.Rect(600, 610, 100, 40)
+            pygame.draw.rect(self.screen, (150, 100, 0), cancel_rect)
+            draw_outlined_text("Cancel", (cancel_rect.x + 10, cancel_rect.y + 8), self.font, (255, 255, 255), "topleft")
+
+            none_rect = pygame.Rect(600, 670, 100, 40)
+            pygame.draw.rect(self.screen, (150, 0, 0), none_rect)
+            draw_outlined_text("None", none_rect.center, self.font, (255, 255, 255), "center")
+
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                elif event.type == pygame.MOUSEWHEEL:
+                    scroll_offset -= event.y
+
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        mouse_pos = pygame.mouse.get_pos()
+                        sb_rect = pygame.Rect(sb_x, sb_y, sb_w, sb_h)
+                        
+                        if len(all_files) > max_visible_files and sb_rect.collidepoint(mouse_pos):
+                            dragging_scrollbar = True
+                            update_scroll_from_mouse(mouse_pos[1])
+                        else:
+                            for f_rect, full_path in file_rects:
+                                if f_rect.collidepoint(mouse_pos):
+                                    if not is_save:
+                                        opt["val"] = full_path
+                                        selecting = False
+                                    else:
+                                        input_text = os.path.basename(full_path)
+
+                            if is_save and save_btn_rect and save_btn_rect.collidepoint(mouse_pos):
+                                if input_text:
+                                    if not input_text.endswith(".txt"):
+                                        input_text += ".txt"
+                                    opt["val"] = os.path.join(models_dir, input_text)
+                                    selecting = False
+
+                            if cancel_rect.collidepoint(mouse_pos):
+                                selecting = False
+
+                            if none_rect.collidepoint(mouse_pos):
+                                opt["val"] = ""
+                                selecting = False
+
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        dragging_scrollbar = False
+
+                elif event.type == pygame.MOUSEMOTION:
+                    if dragging_scrollbar:
+                        mouse_pos = pygame.mouse.get_pos()
+                        update_scroll_from_mouse(mouse_pos[1])
+
+                elif event.type == pygame.KEYDOWN and is_save:
+                    if event.key == pygame.K_RETURN:
+                        if input_text:
+                            if not input_text.endswith(".txt"):
+                                input_text += ".txt"
+                            opt["val"] = os.path.join(models_dir, input_text)
+                            selecting = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        input_text = input_text[:-1]
+                    elif event.unicode:
+                        input_text += event.unicode
+
+            clock.tick(30)
 
     def execute_launch(self):
         config = {opt["name"]: opt["val"] for opt in self.options if opt["type"] != "action"}
