@@ -1,5 +1,4 @@
 from environment import (
-    GRID_COLS, GRID_ROWS,
     create_board, update_board, print_board,
     Snake, GoodApple, BadApple
 )
@@ -31,6 +30,7 @@ OPPOSITES = {
     "LEFT": "RIGHT",
     "RIGHT": "LEFT",
 }
+
 
 class Game:
     def __init__(self, terminal_output=True):
@@ -66,7 +66,7 @@ class Game:
         """
         Move the player according to the requested direction.
         Deny 360 degre turn of the player
-        
+
         Returns an event describing what happened:
             None       -> normal movement
             "green"    -> ate a green apple
@@ -79,7 +79,8 @@ class Game:
         if (self.game_over):
             return (None)
 
-        if (self.current_direction and requested_direction == OPPOSITES.get(self.current_direction)):
+        if (self.current_direction and
+           requested_direction == OPPOSITES.get(self.current_direction)):
             action = self.current_direction
         else:
             action = requested_direction
@@ -173,13 +174,13 @@ class Game:
 def compute_vision(board, head):
     """
     Scan the 4 lines of sight from the head
-    
+
     Args:
-		board: full game board
+        board: full game board
         head: head position
-        
+
     Returns:
-		up: column from upper wall to head
+        up: column from upper wall to head
         down: column from head to lower wall
         left: line from left wall to head
         right: line from head to right wall
@@ -214,12 +215,12 @@ def summarize(line):
     """
     Return the immediate neighbour (danger check) and
     whether a green or red apple is visible anywhere along the line
-    
+
     Args:
-		line: neighbour case
-    
+        line: neighbour case
+
     Returns:
-		nearest: state of the neighbour
+        nearest: state of the neighbour
         has_green (bool): check Green Apple
         has_red (bool): check Red Apple
         has_self (bool): check Snake part
@@ -234,13 +235,13 @@ def summarize(line):
 def vision_to_state(vision, previous_action=None):
     """
     Check for each direction the state of the board by the agent vision
-    
+
     Args:
-    	vision: vision board of the agent
-    	previous_action: previous action
-        
+        vision: vision board of the agent
+        previous_action: previous action
+
     Returns:
-		vision_up: upper case actual state
+        vision_up: upper case actual state
         vision_down: down case actual state
         vision_left: left case actual state
         vision_right: right case actual state

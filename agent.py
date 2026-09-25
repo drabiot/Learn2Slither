@@ -9,7 +9,7 @@ from environment import set_grid_size
 from interpreter import compute_vision, vision_to_state, reward_for, Game
 
 ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
-DIRECTIONS = {"UP":0, "DOWN":1, "LEFT":2, "RIGHT":3}
+DIRECTIONS = {"UP": 0, "DOWN": 1, "LEFT": 2, "RIGHT": 3}
 
 LOOP_WINDOW = 30
 LOOP_MIN_UNIQUE = 5
@@ -33,12 +33,12 @@ class Agent:
     def choose_action(self, state, learn=True):
         """
         Choose an action for the given state using an epsilon-greedy policy.
-        
+
         During learning, the agent explores by randomly selecting an action
         with probability epsilon. The random action is selected only among
         safe actions to prevent the agent from deliberately choosing
         a suicidal or invalid action.
-        
+
         Otherwise, the agent exploits the Q-table by selecting one
         of the actions with the highest Q-value.
         If several actions have the same maximum Q-value,
@@ -49,7 +49,7 @@ class Agent:
             learn: whether the agent is currently learning
             If True, epsilon is used to balance exploration and exploitation
             If False, the agent always selects an action based on the Q-table
-            
+
         Returns:
             action: action selected by the agent
         """
@@ -92,7 +92,7 @@ class Agent:
 
     def decay_epsilon(self, session=None, total_sessions=None):
         """
-        Decay the percentage of randomness allowed for the agent 
+        Decay the percentage of randomness allowed for the agent
         based on the training progress (sessions).
         """
         if not hasattr(self, "episode_count"):
@@ -100,7 +100,8 @@ class Agent:
         self.episode_count += 1
 
         s = session if session is not None else self.episode_count
-        t = total_sessions if total_sessions is not None else getattr(self, "total_sessions", 1000)
+        t = total_sessions if total_sessions is not None else (
+            getattr(self, "total_sessions", 1000))
 
         progress = min(1.0, s / t)
         self.epsilon = max(
@@ -151,7 +152,8 @@ class Agent:
 
 
 def play_epoch(agent, learn=True, visual=False, terminal_output=False,
-                 display=None, fps=8, max_steps=2000, session=1, session_max=100):
+               display=None, fps=8, max_steps=2000, session=1,
+               session_max=100):
     """
     Train sessions by session our agent
 
@@ -163,7 +165,7 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
         in terminal
         display: graphic interface that show the board
         fps (int): frame per second to accelerate or not the speed of the agent
-        max_steps (int): max step the agent can do before dying 
+        max_steps (int): max step the agent can do before dying
         to prevent infinite loop
 
     Returns:
@@ -291,15 +293,16 @@ def parse_args():
     Returns:
         sessions (int): number of session the agent need to do
         save (path | str): save in the given Q-table
-        load (path | str): load the given Q-table 
+        load (path | str): load the given Q-table
         visual (bool): (on | off) display graphically the full board
         dontlearn (bool): disable the agent learning
         terminal (bool): (on | off) display the agent board vision in terminal
         fps (int): frame per second to accelerate or not the speed of the agent
-        max-steps (int): max step the agent can do before dying 
+        max-steps (int): max step the agent can do before dying
         to prevent infinite loop
     """
-    parser = argparse.ArgumentParser(description="Learn2Slither Q-learning agent")
+    parser = argparse.ArgumentParser(
+        description="Learn2Slither Q-learning agent")
     parser.add_argument("-sessions", type=int, default=1)
     parser.add_argument("-save", type=str, default=None)
     parser.add_argument("-load", type=str, default=None)

@@ -3,17 +3,6 @@ import random
 GRID_COLS = 10
 GRID_ROWS = 10
 
-def set_grid_size(size):
-    """
-    Change the grid size by the given value
-    
-    Args:
-		size: number of case
-    """
-    global GRID_COLS, GRID_ROWS
-    GRID_COLS = size
-    GRID_ROWS = size
-
 COLOR_RESET = "\033[0m"
 
 COLORS = {
@@ -24,6 +13,18 @@ COLORS = {
     'H': "\033[94m",  # HEAD
     'S': "\033[34m",  # SNAKE
 }
+
+
+def set_grid_size(size):
+    """
+    Change the grid size by the given value
+
+    Args:
+        size: number of case
+    """
+    global GRID_COLS, GRID_ROWS
+    GRID_COLS = size
+    GRID_ROWS = size
 
 
 class Snake():

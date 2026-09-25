@@ -173,7 +173,7 @@ class Display:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return True
         return False
- 
+
     def tick(self, fps):
         self.clock.tick(fps)
 
