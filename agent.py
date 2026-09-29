@@ -151,9 +151,19 @@ class Agent:
         return (agent)
 
 
+def wait_for_step(display):
+    if (display):
+        return (display.wait_for_step())
+    try:
+        input("Press Enter for next move...")
+    except EOFError:
+        return (False)
+    return (True)
+
+
 def play_epoch(agent, learn=True, visual=False, terminal_output=False,
                display=None, fps=8, max_steps=2000, session=1,
-               session_max=100):
+               session_max=100, step_by_step=False):
     """
     Train sessions by session our agent
 
@@ -187,6 +197,10 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
         display.draw(game.board)
 
     while (not game.game_over and steps < max_steps):
+        if (step_by_step and not wait_for_step(display)):
+            game.game_over = True
+            break
+
         state = vision_to_state(
             compute_vision(game.board, game.snake()[0]), previous_action
         )
@@ -235,7 +249,8 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
 
 
 def train(sessions, agent, save_path=None, learn=True, visual=False,
-          terminal_output=False, fps=8, max_steps=2000, board_size=10):
+          terminal_output=False, fps=8, max_steps=2000, board_size=10,
+          step_by_step=False):
     """
     Train our Agent and display stats about the training
 
@@ -268,7 +283,8 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
         stats = play_epoch(
             agent, learn=learn, visual=visual,
             terminal_output=terminal_output, display=display, fps=fps,
-            max_steps=max_steps, session=session, session_max=sessions
+            max_steps=max_steps, session=session, session_max=sessions,
+            step_by_step=step_by_step
         )
         best_length = max(best_length, stats["max_length"])
         length_mean = length_mean + stats["max_length"]
@@ -317,6 +333,8 @@ def parse_args():
     parser.add_argument("-fps", type=int, default=8)
     parser.add_argument("-max-steps", type=int, default=2000, dest="max_steps")
     parser.add_argument("-board-size", type=int, default=10, dest="board_size")
+    parser.add_argument("-step-by-step", action="store_true",
+                        dest="step_by_step")
     return (parser.parse_args())
 
 
@@ -338,7 +356,8 @@ def main():
         terminal_output=(args.terminal == "on"),
         fps=args.fps,
         max_steps=args.max_steps,
-        board_size=args.board_size
+        board_size=args.board_size,
+        step_by_step=args.step_by_step
     )
     return (0)
 

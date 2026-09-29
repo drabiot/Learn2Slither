@@ -64,6 +64,7 @@ class Display:
             board: actual full board of the game
         """
 
+        self.last_board = board
         head_pos = None
         for r_idx, row in enumerate(board):
             for c_idx, cell in enumerate(row):
@@ -173,6 +174,18 @@ class Display:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return True
         return False
+
+    def wait_for_step(self, idle_fps=30):
+        while (True):
+            for event in pygame.event.get():
+                if (event.type == pygame.QUIT):
+                    return (False)
+                if (event.type == pygame.KEYDOWN):
+                    if (event.key == pygame.K_ESCAPE):
+                        return (False)
+                    return (True)
+            self.draw(self.last_board)
+            self.clock.tick(idle_fps)
 
     def tick(self, fps):
         self.clock.tick(fps)
