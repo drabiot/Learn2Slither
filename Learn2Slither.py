@@ -169,6 +169,8 @@ class Menu:
                 "texture/terminal.png").convert_alpha()
             self.display_label_img = pygame.image.load(
                 "texture/display.png").convert_alpha()
+            self.step_by_step_label_img = pygame.image.load(
+                "texture/step_by_step.png").convert_alpha()
 
             self.menu_int_image = pygame.image.load(
                 "texture/menu_int.png").convert_alpha()
@@ -205,6 +207,7 @@ class Menu:
             self.learning_label_img = None
             self.terminal_label_img = None
             self.display_label_img = None
+            self.step_by_step_label_img = None
 
             self.menu_int_image = None
             self.menu_int_hover_image = None
@@ -233,6 +236,8 @@ class Menu:
             {"name": "terminal", "type": "bool", "val": False,
              "edit": False},
             {"name": "display", "type": "bool", "val": True,
+             "edit": False},
+            {"name": "step by step", "type": "bool", "val": False,
              "edit": False},
             {"name": "sessions", "type": "int", "val": 20,
              "edit": False, "edit_buffer": ""},
@@ -320,7 +325,7 @@ class Menu:
                         row = i
                     else:
                         col = 1
-                        row = i - 4
+                        row = i - 5
 
                     x = left_col_x if col == 0 else right_col_x
                     y = start_y + (row * y_spacing)
@@ -339,6 +344,8 @@ class Menu:
                             label_img = self.terminal_label_img
                         elif (opt["name"] == "display"):
                             label_img = self.display_label_img
+                        elif (opt["name"] == "step by step"):
+                            label_img = self.step_by_step_label_img
 
                         is_hovered = (i == self.selected_index)
 
@@ -896,6 +903,7 @@ class Menu:
             fps=int(config["fps"]),
             max_steps=int(config["max steps"]),
             board_size=int(config["board size"]),
+            step_by_step=config["step by step"]
         )
 
         avg_length = lengths if lengths else 0
