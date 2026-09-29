@@ -5,6 +5,8 @@ import pygame
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 
 CELL_SIZE = 40
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 800
 
 PYGAME_COLORS = {
     '0': (40, 40, 40),
@@ -35,7 +37,9 @@ class Display:
         pygame.init()
         width = (GRID_COLS + 2) * CELL_SIZE
         height = (GRID_ROWS + 2) * CELL_SIZE
-        self.screen = pygame.display.set_mode((width, height))
+        self.window = pygame.display.set_mode(
+            (WINDOW_WIDTH, WINDOW_HEIGHT))  # CHANGÉ
+        self.screen = pygame.Surface((width, height))
         pygame.display.set_caption("Learn2Slither")
         self.clock = pygame.time.Clock()
 
@@ -65,6 +69,10 @@ class Display:
         """
 
         self.last_board = board
+        size = (len(board[0]) * CELL_SIZE, len(board) * CELL_SIZE)
+        if self.screen.get_size() != size:
+            self.screen = pygame.Surface(size)
+
         head_pos = None
         for r_idx, row in enumerate(board):
             for c_idx, cell in enumerate(row):
@@ -150,6 +158,8 @@ class Display:
 
                 self.screen.blit(scaled_img, img_rect)
 
+        pygame.transform.smoothscale(
+            self.screen, (WINDOW_WIDTH, WINDOW_HEIGHT), self.window)  # CHANGÉ
         pygame.display.flip()
 
     def poll_direction(self, idle_fps=30):
