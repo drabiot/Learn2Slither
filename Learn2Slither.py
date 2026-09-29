@@ -7,6 +7,131 @@ import pygame
 os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 
 
+class End:
+    def __init__(self, sessions, avg_length):
+        pygame.init()
+        self.width = self.height = 800
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Learn2Slither : End Menu")
+        self.font = pygame.font.Font(None, 36)
+        self.title_font = pygame.font.Font(None, 54)
+        self.sessions = sessions
+        self.avg_length = avg_length
+
+        try:
+            self.bg_image = pygame.image.load(
+                "texture/menu_background.png").convert()
+            self.bg_image = pygame.transform.scale(
+                self.bg_image, (self.width, self.height))
+            self.title_image = pygame.image.load(
+                "texture/menu_title.png").convert_alpha()
+            self.menu_int_image = pygame.image.load(
+                "texture/menu_int.png").convert_alpha()
+        except FileNotFoundError:
+            self.bg_image = None
+            self.title_image = None
+            self.menu_int_image = None
+
+        try:
+            self.pixel_font = pygame.font.Font("texture/pixel_font.ttf", 30)
+        except FileNotFoundError:
+            self.pixel_font = pygame.font.Font(None, 30)
+
+    def draw_outlined_text(self, text, center, font_obj=None,
+                           color=(255, 255, 255)):
+        font_obj = font_obj or self.pixel_font
+        outline_surf = font_obj.render(text, True, (0, 0, 0))
+        for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2),
+                       (-2, -2), (2, -2), (-2, 2), (2, 2)]:
+            self.screen.blit(outline_surf, outline_surf.get_rect(
+                center=(center[0] + dx, center[1] + dy)))
+        surf = font_obj.render(text, True, color)
+        self.screen.blit(surf, surf.get_rect(center=center))
+
+    def draw_stat(self, x, y, label_text, value):
+        if (self.menu_int_image):
+            sw, sh = self.menu_int_image.get_size()
+            box_w, box_h = int(sw * 4.0), int(sh * 4.0)
+        else:
+            box_w, box_h = 200, 60
+        center_x = x + box_w // 2 - 15
+        value_y = y + 40 + 5 + box_h // 2
+
+        self.draw_outlined_text(label_text, (center_x, value_y - 35))
+        self.draw_outlined_text(value, (center_x, value_y))
+
+    def draw_button(self, center, text, color, mouse_pos):
+        rect = pygame.Rect(0, 0, 160, 40)
+        rect.center = center
+        pygame.draw.rect(self.screen, color, rect)
+        text_color = ((0, 255, 0) if rect.collidepoint(mouse_pos)
+                      else (255, 255, 255))
+        self.draw_outlined_text(text, rect.center, self.font, text_color)
+        return rect
+
+    def run(self):
+        clock = pygame.time.Clock()
+        start_time = pygame.time.get_ticks()
+
+        left_col_x = 135
+        right_col_x = 548
+        stats_y = 405
+
+        while (True):
+            if (self.bg_image):
+                self.screen.blit(self.bg_image, (0, 0))
+            else:
+                self.screen.fill((30, 30, 30))
+
+            elapsed_time = (pygame.time.get_ticks() - start_time) / 1000.0
+            if (self.title_image):
+                base_scale = 5.0
+                offset_y = math.sin(elapsed_time * 3) * 4
+                pulse_scale = base_scale + (math.sin(elapsed_time * 4) * 0.1)
+                base_w, base_h = self.title_image.get_size()
+                scaled_title = pygame.transform.scale(
+                    self.title_image,
+                    (int(base_w * pulse_scale), int(base_h * pulse_scale)))
+                title_rect = scaled_title.get_rect(center=(
+                    self.width // 2, 300 + int(offset_y)))
+                self.screen.blit(scaled_title, title_rect)
+            else:
+                title_surf = self.title_font.render(
+                    "Learn2Slither", True, (255, 255, 255))
+                self.screen.blit(title_surf, (
+                    self.width // 2 - title_surf.get_width() // 2, 50))
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            self.draw_stat(left_col_x, stats_y, "Sessions",
+                           str(self.sessions))
+            self.draw_stat(right_col_x, stats_y, "Average length",
+                           f"{self.avg_length:.2f}")
+
+            restart_rect = self.draw_button(
+                (self.width // 4 + 20, 635), "Restart", (0, 150, 0),
+                mouse_pos)
+            quit_rect = self.draw_button(
+                (3 * self.width // 4 - 20, 635), "Quit", (150, 0, 0),
+                mouse_pos)
+
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if (event.type == pygame.QUIT):
+                    pygame.quit()
+                    sys.exit(0)
+                elif (event.type == pygame.MOUSEBUTTONDOWN
+                      and event.button == 1):
+                    if (restart_rect.collidepoint(event.pos)):
+                        return
+                    if (quit_rect.collidepoint(event.pos)):
+                        pygame.quit()
+                        sys.exit(0)
+
+            clock.tick(30)
+
+
 class Menu:
     def __init__(self):
         pygame.init()
@@ -761,7 +886,7 @@ class Menu:
         else:
             agent = Agent()
 
-        train(
+        lengths = train(
             sessions=int(config["sessions"]),
             agent=agent,
             save_path=save_path,
@@ -772,6 +897,9 @@ class Menu:
             max_steps=int(config["max steps"]),
             board_size=int(config["board size"]),
         )
+
+        avg_length = lengths if lengths else 0
+        End(int(config["sessions"]), avg_length).run()
 
         sys.exit(main())
 

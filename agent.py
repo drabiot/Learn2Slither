@@ -250,6 +250,9 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
         fps (int): frame per second to accelerate or not the speed of the agent
         max_steps (int): max step the agent can do before dying
         to prevent infinite loop
+
+    Returns:
+        float: average length of the snake during previous training
     """
     set_grid_size(board_size)
     display = None
@@ -284,6 +287,8 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
     if (save_path):
         agent.save(save_path)
         print(f"Save learning state in {save_path}")
+
+    return (length_mean / session)
 
 
 def parse_args():
