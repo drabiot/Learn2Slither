@@ -316,6 +316,7 @@ def parse_args():
     parser.add_argument("-terminal", choices=["on", "off"], default="off")
     parser.add_argument("-fps", type=int, default=8)
     parser.add_argument("-max-steps", type=int, default=2000, dest="max_steps")
+    parser.add_argument("-board-size", type=int, default=10, dest="board_size")
     return (parser.parse_args())
 
 
@@ -337,6 +338,7 @@ def main():
         terminal_output=(args.terminal == "on"),
         fps=args.fps,
         max_steps=args.max_steps,
+        board_size=args.board_size
     )
     return (0)
 
