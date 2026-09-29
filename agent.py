@@ -218,6 +218,9 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
         elif (event in ("red", "starved")):
             red_eaten += 1
 
+        if (visual):
+            display.stats.update(green=green_eaten, red=red_eaten)
+
         game.refresh_board()
         steps += 1
 
@@ -284,7 +287,7 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
 
     if (visual):
         from display import Display
-        display = Display()
+        display = Display(fps=fps, step_by_step=step_by_step)
 
     best_length = 0
     length_mean = 0
@@ -293,6 +296,11 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
     red_mean = 0
 
     for session in range(1, sessions + 1):
+        if (display):
+            display.stats.update(
+                session=session, total=sessions, best=best_length,
+                avg=(length_mean / (session - 1) if session > 1 else 0.0),
+                green=0, red=0)
         stats = play_epoch(
             agent, learn=learn, visual=visual,
             terminal_output=terminal_output, display=display, fps=fps,
@@ -311,7 +319,7 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
             f"duration = {stats['duration']}, "
             f"green = {stats['green']}, red = {stats['red']}, "
             f"best so far = {best_length}, "
-            f"lenght average = {length_mean / session}"
+            f"length average = {length_mean / session}"
         )
 
     if (visual):
