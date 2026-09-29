@@ -188,6 +188,8 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
     max_length = len(game.snake())
     steps = 0
     previous_action = None
+    green_eaten = 0
+    red_eaten = 0
 
     recent_positions = deque(maxlen=LOOP_WINDOW)
     if game.snake():
@@ -210,6 +212,12 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
 
         action = agent.choose_action(state, learn=learn)
         event = game.step(action)
+
+        if (event == "green"):
+            green_eaten += 1
+        elif (event in ("red", "starved")):
+            red_eaten += 1
+
         game.refresh_board()
         steps += 1
 
@@ -245,7 +253,8 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
     if (learn):
         agent.decay_epsilon(session, session_max)
 
-    return ({"max_length": max_length, "duration": steps})
+    return ({"max_length": max_length, "duration": steps,
+             "green": green_eaten, "red": red_eaten})
 
 
 def train(sessions, agent, save_path=None, learn=True, visual=False,
@@ -268,6 +277,7 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
 
     Returns:
         float: average length of the snake during previous training
+        int: number of step the agent do in average during previous traing
     """
     set_grid_size(board_size)
     display = None
@@ -278,6 +288,9 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
 
     best_length = 0
     length_mean = 0
+    duration_mean = 0
+    green_mean = 0
+    red_mean = 0
 
     for session in range(1, sessions + 1):
         stats = play_epoch(
@@ -288,11 +301,15 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
         )
         best_length = max(best_length, stats["max_length"])
         length_mean = length_mean + stats["max_length"]
+        duration_mean = duration_mean + stats["duration"]
+        green_mean = green_mean + stats["green"]
+        red_mean = red_mean + stats["red"]
 
         print(
             f"Session {session}/{sessions} - "
             f"max length = {stats['max_length']}, "
             f"duration = {stats['duration']}, "
+            f"green = {stats['green']}, red = {stats['red']}, "
             f"best so far = {best_length}, "
             f"lenght average = {length_mean / session}"
         )
@@ -304,7 +321,8 @@ def train(sessions, agent, save_path=None, learn=True, visual=False,
         agent.save(save_path)
         print(f"Save learning state in {save_path}")
 
-    return (length_mean / session)
+    return (length_mean / session, duration_mean / session,
+            green_mean / session, red_mean / session)
 
 
 def parse_args():

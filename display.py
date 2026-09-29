@@ -38,7 +38,7 @@ class Display:
         width = (GRID_COLS + 2) * CELL_SIZE
         height = (GRID_ROWS + 2) * CELL_SIZE
         self.window = pygame.display.set_mode(
-            (WINDOW_WIDTH, WINDOW_HEIGHT))  # CHANGÉ
+            (WINDOW_WIDTH, WINDOW_HEIGHT))
         self.screen = pygame.Surface((width, height))
         pygame.display.set_caption("Learn2Slither")
         self.clock = pygame.time.Clock()

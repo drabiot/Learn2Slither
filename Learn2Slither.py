@@ -8,7 +8,8 @@ os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 
 
 class End:
-    def __init__(self, sessions, avg_length):
+    def __init__(self, sessions, avg_length, avg_duration,
+                 avg_green, avg_red):
         pygame.init()
         self.width = self.height = 800
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -17,6 +18,9 @@ class End:
         self.title_font = pygame.font.Font(None, 54)
         self.sessions = sessions
         self.avg_length = avg_length
+        self.avg_duration = avg_duration
+        self.avg_green = avg_green
+        self.avg_red = avg_red
 
         try:
             self.bg_image = pygame.image.load(
@@ -73,9 +77,15 @@ class End:
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks()
 
-        left_col_x = 135
-        right_col_x = 548
-        stats_y = 405
+        left_col_x_bot = 150
+        middle_col_x_bot = 350
+        right_col_x_bot = 550
+
+        left_col_x_top = 216
+        right_col_x_top = 483
+
+        stats_y_bot = 405
+        stats_y_top = 205
 
         while (True):
             if (self.bg_image):
@@ -103,10 +113,17 @@ class End:
 
             mouse_pos = pygame.mouse.get_pos()
 
-            self.draw_stat(left_col_x, stats_y, "Sessions",
+            self.draw_stat(left_col_x_bot, stats_y_bot, "Sessions",
                            str(self.sessions))
-            self.draw_stat(right_col_x, stats_y, "Average length",
+            self.draw_stat(middle_col_x_bot, stats_y_bot, "Average length",
                            f"{self.avg_length:.2f}")
+            self.draw_stat(right_col_x_bot, stats_y_bot, "Average duration",
+                           str(self.avg_duration))
+
+            self.draw_stat(left_col_x_top, stats_y_top, "Avg G-Apple eaten",
+                           str(self.avg_green))
+            self.draw_stat(right_col_x_top, stats_y_top, "Avg R-Apple eaten",
+                           str(self.avg_red))
 
             restart_rect = self.draw_button(
                 (self.width // 4 + 20, 635), "Restart", (0, 150, 0),
@@ -893,7 +910,7 @@ class Menu:
         else:
             agent = Agent()
 
-        lengths = train(
+        lengths, durations, green, red = train(
             sessions=int(config["sessions"]),
             agent=agent,
             save_path=save_path,
@@ -907,7 +924,11 @@ class Menu:
         )
 
         avg_length = lengths if lengths else 0
-        End(int(config["sessions"]), avg_length).run()
+        avg_duration = durations if durations else 0
+        avg_green = green if green else 0
+        avg_red = red if red else 0
+        End(int(config["sessions"]), avg_length, avg_duration,
+            avg_green, avg_red).run()
 
         sys.exit(main())
 
