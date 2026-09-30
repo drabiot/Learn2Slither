@@ -1,6 +1,6 @@
 from environment import (
     create_board, update_board, print_board,
-    Snake, GoodApple, BadApple
+    Snake, GoodApple, BadApple, GameOver
 )
 
 WALL = "W"
@@ -35,20 +35,22 @@ OPPOSITES = {
 class Game:
     def __init__(self, terminal_output=True):
         self.terminal_output = terminal_output
-
         self.board = create_board()
-        self.snake = Snake()
-
-        occupied = set(self.snake())
-        self.good_apple_1 = GoodApple(occupied)
-        occupied.add(self.good_apple_1())
-        self.good_apple_2 = GoodApple(occupied)
-        occupied.add(self.good_apple_2())
-        self.bad_apple = BadApple(occupied)
-        occupied.add(self.bad_apple())
-
         self.current_direction = None
         self.game_over = False
+        self.snake = None
+        self.good_apple_1 = self.good_apple_2 = self.bad_apple = None
+
+        try:
+            self.snake = Snake()
+            occupied = set(self.snake())
+            self.good_apple_1 = GoodApple(occupied)
+            occupied.add(self.good_apple_1())
+            self.good_apple_2 = GoodApple(occupied)
+            occupied.add(self.good_apple_2())
+            self.bad_apple = BadApple(occupied)
+        except GameOver:
+            self.game_over = True
 
     def refresh_board(self):
         """

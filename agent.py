@@ -5,7 +5,7 @@ import random
 import sys
 from collections import deque
 
-from environment import set_grid_size
+from environment import set_grid_size, GameOver
 from interpreter import compute_vision, vision_to_state, reward_for, Game
 
 ACTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
@@ -183,6 +183,11 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
         max_duration (int): maximum step the agent do in one session
     """
     game = Game(terminal_output=terminal_output)
+    if (game.game_over):
+        if (learn):
+            agent.decay_epsilon(session, session_max)
+        return ({"max_length": 0, "duration": 0, "green": 0, "red": 0})
+
     game.refresh_board()
 
     max_length = len(game.snake())
@@ -211,7 +216,11 @@ def play_epoch(agent, learn=True, visual=False, terminal_output=False,
             game.show_vision()
 
         action = agent.choose_action(state, learn=learn)
-        event = game.step(action)
+        try:
+            event = game.step(action)
+        except GameOver:
+            game.game_over = True
+            break
 
         if (event == "green"):
             green_eaten += 1

@@ -27,6 +27,10 @@ def set_grid_size(size):
     GRID_ROWS = size
 
 
+class GameOver(Exception):
+    pass
+
+
 class Snake():
     def __init__(self):
         self.positions = self._generate_start_body()
@@ -42,34 +46,25 @@ class Snake():
         retrying up to a maximum limit to avoid infinite loops.
         """
 
-        attempts = 0
-        max_attempts = 1000
+        candidates = []
+        directions = ((0, 1), (0, -1), (1, 0), (-1, 0))
 
-        while (attempts < max_attempts):
-            base_pos_x = random.randint(1, GRID_COLS)
-            base_pos_y = random.randint(1, GRID_ROWS)
+        for x in range(1, GRID_COLS + 1):
+            for y in range(1, GRID_ROWS + 1):
+                for dir_x, dir_y in directions:
+                    positions = [
+                        (x, y),
+                        (x - dir_x, y - dir_y),
+                        (x - dir_x * 2, y - dir_y * 2),
+                    ]
+                    if all(1 <= px <= GRID_COLS and 1 <= py <= GRID_ROWS
+                           for px, py in positions):
+                        candidates.append(positions)
 
-            if (random.randint(0, 1)):
-                base_dir_x = 0
-                base_dir_y = random.choice((1, -1))
-            else:
-                base_dir_x = random.choice((1, -1))
-                base_dir_y = 0
+        if (not candidates):
+            raise GameOver("Game over: can't place the snake")
 
-            positions = [
-                (base_pos_x, base_pos_y),
-                (base_pos_x - base_dir_x, base_pos_y - base_dir_y),
-                (base_pos_x - (base_dir_x * 2), base_pos_y - (base_dir_y * 2)),
-            ]
-
-            if (len(set(positions)) == len(positions) and
-                all(1 <= x <= GRID_COLS and
-                    1 <= y <= GRID_ROWS for x, y in positions)):
-                return (positions)
-
-            attempts += 1
-
-        raise RuntimeError("Error: Can't place the snake")
+        return (random.choice(candidates))
 
 
 class Apple:
@@ -85,17 +80,16 @@ class Apple:
         with a safety exit if the board is full.
         """
 
-        attempts = 0
-        max_attempts = 10000
+        excluded = set(excluded_positions)
+        free_cells = [(x, y)
+                      for x in range(1, GRID_COLS + 1)
+                      for y in range(1, GRID_ROWS + 1)
+                      if (x, y) not in excluded]
 
-        while (attempts < max_attempts):
-            position = (random.randint(1, GRID_COLS),
-                        random.randint(1, GRID_ROWS))
-            if (position not in excluded_positions):
-                return (position)
-            attempts += 1
+        if (not free_cells):
+            raise GameOver("Game over: no more room for an apple")
 
-        raise RuntimeError("Error: Can't place apple")
+        return (random.choice(free_cells))
 
     def respawn(self, excluded_positions):
         self.position = self.random_position(excluded_positions)
