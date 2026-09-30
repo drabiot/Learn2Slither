@@ -6,7 +6,7 @@ os.environ.setdefault('PYGAME_HIDE_SUPPORT_PROMPT', '1')
 
 CELL_SIZE = 40
 BOARD_SIZE = 800
-PANEL_WIDTH = 200
+PANEL_WIDTH = 300
 WINDOW_WIDTH = BOARD_SIZE + PANEL_WIDTH
 WINDOW_HEIGHT = BOARD_SIZE
 
@@ -15,10 +15,10 @@ MAX_FPS = 120
 
 BUTTON_WIDTH = 120
 KEY_WIDTH = 60
-METER_WIDTH = PANEL_WIDTH + 40
+METER_WIDTH = PANEL_WIDTH - 20
 SLIDER_PAD = 5
 TICK_OFFSET_Y = 13
-PANEL_SHIFT = 30
+PANEL_SHIFT = 0
 
 OUTLINE_OFFSETS = [(-1, 0), (1, 0), (0, -1), (0, 1),
                    (-1, -1), (1, -1), (-1, 1), (1, 1)]
@@ -30,6 +30,7 @@ PYGAME_COLORS = {
     'G': (40, 180, 40),
     'H': (78, 124, 246),
     'S': (66, 111, 227),
+    'P': (74, 117, 44),
 }
 
 KEY_TO_DIRECTION = {
@@ -111,7 +112,7 @@ class Display:
             self.font = pygame.font.Font(None, 20)
 
         self.panel_bg = pygame.Surface((PANEL_WIDTH, WINDOW_HEIGHT))
-        self.panel_bg.fill(PYGAME_COLORS['W'])
+        self.panel_bg.fill(PYGAME_COLORS['P'])
 
         self.next_img = self._load("next_step_key", BUTTON_WIDTH)
         self.next_hover = self._load("next_step_key_hover", BUTTON_WIDTH)
@@ -328,7 +329,7 @@ class Display:
 
                 self.screen.blit(scaled_img, img_rect)
 
-        self.window.blit(pygame.transform.smoothscale(
+        self.window.blit(pygame.transform.scale(
             self.screen, (BOARD_SIZE, BOARD_SIZE)), (0, 0))
         self._draw_panel()
         pygame.display.flip()
@@ -370,7 +371,9 @@ class Display:
         is ignored). Events are still handled while waiting, so the slider,
         the pause button and the window stay responsive even at 1 fps.
         """
-        frame_ms = 1000 / self.fps
+        effective_fps = 120 if self.step_by_step else self.fps
+
+        frame_ms = 1000 / effective_fps
         start = pygame.time.get_ticks()
         while (self.paused or pygame.time.get_ticks() - start < frame_ms):
             if (self._process_events()):
