@@ -78,16 +78,12 @@ To use the graphic interface you only need to execute Learn2Slither program
 ```
 
 You will have a nice display menu where you can find the same flag as the terminal option one.
-
-<div align="center">
-	<img width="795" height="796" alt="menu" src="https://github.com/user-attachments/assets/c001f061-352b-41db-8ad5-38ad442a22cf" />
-</div>
-
 Moreover, you will have at the end of the training session an end menu with various stats like apple eaten in average, length, duration, etc
 
-<div align="center">
-	<img width="794" height="796" alt="end_menu" src="https://github.com/user-attachments/assets/72889c45-0ff2-4acd-b825-3863eceb4fb6" />
-</div>
+<p align="center">
+  <img width="48%" alt="menu" src="https://github.com/user-attachments/assets/c001f061-352b-41db-8ad5-38ad442a22cf" />
+  <img width="48%" alt="end_menu" src="https://github.com/user-attachments/assets/72889c45-0ff2-4acd-b825-3863eceb4fb6" />
+</p>
 
 ## Sources
 - Create a q-table & use it https://youtu.be/MSrfaI1gGjI
