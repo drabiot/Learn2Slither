@@ -16,6 +16,8 @@ In this project, we need to teach a snake to collect as many fruit as possible w
 - [Usage](#usage)
   - [Terminal](#terminal)
   - [Graphic](#graphic)
+- [Agent](#agent)
+- [Agent Usage](#agent-usage)
 - [Sources](#sources)
 
 
@@ -77,12 +79,45 @@ To use the graphic interface you only need to execute Learn2Slither program
   ./Learn2Slither
 ```
 
-You will have a nice display menu where you can find the same flag as the terminal option one.
-Moreover, you will have at the end of the training session an end menu with various stats like apple eaten in average, length, duration, etc
+You will have a nice display menu where you can find the same flags as in the terminal options.
+Moreover, at the end of the training session, you will have an end menu with various stats like average apples eaten, length, duration, etc.
 
 <p align="center">
   <img width="48%" alt="menu" src="https://github.com/user-attachments/assets/c001f061-352b-41db-8ad5-38ad442a22cf" />
-  <img width="48%" alt="end_menu" src="https://github.com/user-attachments/assets/72889c45-0ff2-4acd-b825-3863eceb4fb6" />
+  <img width="48%" alt="end_menu" src="https://github.com/user-attachments/assets/51e982b8-9f99-47a2-bc06-2d296f8539a8" />
+</p>
+
+## Agent
+
+<p align="center">
+  <img width="90%" alt="test_snake" src="https://github.com/user-attachments/assets/9f867ac2-0d65-4a2e-b5f8-ee8c6fc738e9" />
+</p>
+
+The Agent uses a Q-table to choose his actions.
+
+Before a showcase, we need to train our agent by making random decisions to explore the board he is on. This is called greedy exploration reinforcement learning.
+He will make a lot of bad decisions to prevent making them later.
+
+At the start of a training session, he will load a Q-table (blank or a real Q-table with the load flag), and every time he steps into a new cell, he will write a value to see if it is a good choice or not. He will analyze what is on the right, left, top, and bottom of his head and come up with combinations. For example, if there is a wall on top and a green apple on the left. The left position will have a huge score, the top a really bad score, and the other positions a neutral bad score.
+
+The agent needs a lot of training to become relevant and do real things by himself. By turning off his learning, he will only choose the best tile to move to and will not perform random actions anymore, preventing him from killing himself by accident.
+
+## Agent Usage
+
+You can change Agent speed mid training, pause the agent.
+
+If you activate step-by-step option you will have a button to change the state of the agent step-by-step. (You can also click on whatever key you want to change his step-by-step state)
+
+The Agent Panel will display:
+- Current session he is in out of the max session
+- Max length he achieve during the training
+- Average length on the training
+- Green apple he eat during the session he is in
+- Red apple he eat during the session he is in
+
+<p align="center">
+  <img width="48%" alt="test_buttons" src="https://github.com/user-attachments/assets/8120dd83-24c1-4aac-9c95-ac3c0838666b" />
+  <img width="48%" alt="stepbystep" src="https://github.com/user-attachments/assets/6d25db3e-9f80-4914-bd4d-b4e1d195cb59" />
 </p>
 
 ## Sources
