@@ -73,7 +73,8 @@ The max steps is at 2000, the terminal is off, etc
 ```
 
 ### Graphic
-To use the graphic interface you only need to execute Learn2Slither program
+To use the graphic interface you only need to execute Learn2Slither program.
+(Disclaimer: All the texture in this project except the Red apple are drawn by me. You are free to use them in your project too if you want too)
 
 ```bash
   ./Learn2Slither
